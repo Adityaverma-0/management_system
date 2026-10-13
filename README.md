@@ -15,8 +15,9 @@ Follow [local PDF extraction setup](backend/invoice_extraction/README.md) to ins
 ## Run locally
 
 - `npm --prefix backend run dev`: API on port 8000.
-- `npm run dev`: admin on port 5174.
-- `npm --prefix salesman-dashboard run dev`: salesman on port 5173.
+- `npm run dev:all`: shared login at `http://localhost:5174/login`; admin at `/`, salesman at `/salesman/`. The root dev server proxies the salesman build on port 5173.
+- Individually: `npm run dev` and `npm run dev:salesman` (plus the backend).
+- `npm --prefix salesman-dashboard run dev` remains the legacy standalone entry point.
 
 Create actual products and godowns in Admin, then assign vehicles to godowns and salesmen to vehicles. Set a salesman password with at least eight characters. No products, customers or inventory are automatically seeded into the business database or the salesman selling workflow.
 
@@ -48,4 +49,6 @@ Set `DATABASE_URL`, `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH`, and `CORS_ORIGINS` 
 
 The Dockerfile needs repository-root build context because it copies both `backend/` and `schema.sql`. An older Git commit without `backend/` cannot build this image. Confirm the deployment commit contains these files before retrying.
 
-Build both frontends and serve their dist directories with SPA fallback. Run `npm --prefix backend start` under the existing process supervisor. Configure TLS at the existing reverse proxy, backend environment, database access, Python executable and OCR dependencies. No new hosting infrastructure is required. Apply migrations before serving traffic; preserve a database backup and the previous application build for rollback. Review the current handover report for tested scope and remaining dependency advisories.
+Run `npm run build` from the repository root to build both apps into one `dist/` directory. Deploy the root Vercel project with its checked-in install command and rewrites; `/salesman/*` uses `dist/salesman/index.html`, while other application paths use `dist/index.html`. Set the same `VITE_API_BASE_URL` for both builds. Legacy separate deployments can remain during rollout; redirect their paths to the unified `/salesman/` prefix when ready (users must sign in again across origins). Run `npm --prefix backend start` under the existing process supervisor. Configure TLS at the existing reverse proxy, backend environment, database access, Python executable and OCR dependencies. No new hosting infrastructure is required. Apply migrations before serving traffic; preserve a database backup and the previous application build for rollback. Review the current handover report for tested scope and remaining dependency advisories.
+
+See [implementation, measured results, and rollout limitations](IMPLEMENTATION-REPORT.md).

@@ -6,6 +6,7 @@ import { fetchActiveWorkDay } from './data/mockApi';
 import { request, session } from './data/apiClient';
 import { refreshData } from './data/realApi';
 import LoginPage from './features/Login';
+const unified = import.meta.env.BASE_URL === '/salesman/';
 
 // Pages
 import HomePage from './features/Home';
@@ -100,7 +101,8 @@ function App() {
     setLoading(true); setError('');
     try {
       if (!session()?.token) { setIsAuthenticated(false); return; }
-      await request('/session');
+      const verified = await request('/session');
+      if (verified.user.role !== 'salesman') { setIsAuthenticated(false); return; }
       setIsAuthenticated(true);
       await fetchActiveWorkDay();
     } catch (e) { setError(e instanceof Error ? e.message : 'Could not load data.'); }
@@ -119,11 +121,14 @@ function App() {
     return () => window.removeEventListener('focus', refresh);
   }, [isAuthenticated]);
   if (loading) return <div className="p-6">Loading your inventory...</div>;
-  if (!isAuthenticated) return <LoginPage onLogin={() => void initialize()} />;
+  if (!isAuthenticated) {
+    if (unified) { window.location.replace('/login'); return <div>Opening sign in...</div>; }
+    return <LoginPage onLogin={() => void initialize()} />;
+  }
   if (error) return <div className="p-6 space-y-4"><p role="alert">{error}</p><button onClick={() => void initialize()}>Retry</button><button onClick={logout}>Logout</button></div>;
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <Routes>
         <Route path="/" element={<Layout onLogout={logout}><HomePage /></Layout>} />
         <Route path="/route" element={<Layout onLogout={logout}><RoutePage /></Layout>} />
@@ -139,13 +144,13 @@ function App() {
 
         <Route path="/stock" element={<Layout onLogout={logout}><StockPage /></Layout>} />
         <Route path="/summary" element={<Layout onLogout={logout}><SummaryPage /></Layout>} />
-        <Route path="/admin" element={<Navigate to="/" replace />} />
+        <Route path="/admin" element={<div className="p-6">Page not found.</div>} />
         <Route path="/load-stock" element={<Layout onLogout={logout}><LoadStockPage /></Layout>} />
         <Route path="/stock-requests" element={<Layout onLogout={logout}><StockRequestsPage /></Layout>} />
         <Route path="/unload" element={<Layout onLogout={logout}><UnloadPage /></Layout>} />
         <Route path="/print/:invoiceId" element={<Layout onLogout={logout}><InvoicePrintPage /></Layout>} />
         
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<div className="p-6">Page not found.</div>} />
       </Routes>
     </BrowserRouter>
   );

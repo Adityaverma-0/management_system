@@ -64,6 +64,8 @@ export interface Invoice {
   newBalancePaise?: number; 
   status: 'VALID' | 'VOID';
   subtotalPaise?: number;
+  roundOffPaise?: number;
+  workDayState?: DayState;
   cgstPercent?: number;
   sgstPercent?: number;
   cgstAmountPaise?: number;

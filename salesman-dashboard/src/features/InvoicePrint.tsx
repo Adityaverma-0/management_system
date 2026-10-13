@@ -4,9 +4,9 @@ import { getInvoice } from '../data/mockApi';
 import { Invoice } from '../domain/types';
 import { productMap } from '../data/catalog';
 import { formatQuantity } from '../domain/units';
-import { formatRupees } from '../domain/money';
+import { formatRupees, formatPayable } from '../domain/money';
 import { Printer, Check, RotateCcw } from 'lucide-react';
-import { cancelInvoice, fetchActiveWorkDay } from '../data/mockApi';
+import { cancelInvoice } from '../data/mockApi';
 
 export default function InvoicePrint() {
   const { invoiceId } = useParams();
@@ -17,12 +17,8 @@ export default function InvoicePrint() {
   const [showUndo, setShowUndo] = useState(true);
 
   useEffect(() => {
-    getInvoice(invoiceId!).then(inv => { if (!inv) throw new Error('Invoice not found.'); setInvoice(inv); }).catch(e => setError(e.message));
+    getInvoice(invoiceId!).then(inv => { if (!inv) throw new Error('Invoice not found.'); setInvoice(inv); setCanCancel(inv.workDayState === 'ON_ROUTE'); }).catch(e => setError(e.message));
     
-    // Check if we can still cancel
-    fetchActiveWorkDay().then(summary => {
-      setCanCancel(summary.state === 'ON_ROUTE');
-    }).catch(e => setError(e.message));
 
     const timer = setTimeout(() => setShowUndo(false), 10000); // 10s undo window
     return () => clearTimeout(timer);
@@ -128,17 +124,18 @@ export default function InvoicePrint() {
             <div className="text-right text-sm py-2 border-b border-black">
               <div className="flex justify-between"><span>Subtotal:</span> <span>{formatRupees(invoice.subtotalPaise)}</span></div>
               <div className="flex justify-between"><span>CGST ({invoice.cgstPercent ?? 0}%):</span> <span>{formatRupees(invoice.cgstAmountPaise || 0)}</span></div>
+              <div className="flex justify-between"><span>Round off:</span><span>{formatRupees(invoice.roundOffPaise || 0)}</span></div>
               <div className="flex justify-between"><span>SGST ({invoice.sgstPercent ?? 0}%):</span> <span>{formatRupees(invoice.sgstAmountPaise || 0)}</span></div>
             </div>
             <div className="text-right text-base font-bold py-2 border-b border-black flex justify-between">
               <span>Grand Total:</span>
-              <span>{formatRupees(invoice.totalAmountPaise)}</span>
+              <span>{formatPayable(invoice.totalAmountPaise)}</span>
             </div>
           </>
         ) : (
           <div className="text-right text-base font-bold py-2 border-b border-black flex justify-between">
              <span>Total:</span>
-             <span>{formatRupees(invoice.totalAmountPaise)}</span>
+             <span>{formatPayable(invoice.totalAmountPaise)}</span>
           </div>
         )}
         
@@ -156,7 +153,7 @@ export default function InvoicePrint() {
           {invoice.paymentMode === 'CREDIT' && (
             <div className="mt-2 p-2 border border-black border-dashed">
               <div className="flex justify-between"><span>Prev Bal:</span> <span>{formatRupees(invoice.previousBalancePaise || 0)}</span></div>
-              <div className="flex justify-between"><span>This Bill:</span> <span>{formatRupees(invoice.totalAmountPaise)}</span></div>
+              <div className="flex justify-between"><span>This Bill:</span> <span>{formatPayable(invoice.totalAmountPaise)}</span></div>
               <div className="flex justify-between font-bold border-t border-black mt-1 pt-1">
                 <span>New Bal:</span> <span>{formatRupees(invoice.newBalancePaise || 0)}</span>
               </div>

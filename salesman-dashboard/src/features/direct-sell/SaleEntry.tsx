@@ -6,7 +6,7 @@ import { getLedger, saveSaleGenerateInvoice, fetchActiveWorkDay, getCustomers, g
 
 import { calculateRemainingStock } from '../../domain/stockLedger';
 import { displayToPieces, formatQuantity } from '../../domain/units';
-import { formatRupees } from '../../domain/money';
+import { formatRupees, formatPayable } from '../../domain/money';
 import { validatePaymentMode } from '../../domain/payments';
 import { Search, Plus, Minus, ShoppingCart, ArrowLeft, CheckCircle, CreditCard, Banknote, QrCode } from 'lucide-react';
 
@@ -91,7 +91,7 @@ export default function SaleEntry() {
   const taxBreakdown = useMemo(() => {
     const cgstAmount = Math.round(subtotalPaise * (tax.cgst || 0) / 100);
     const sgstAmount = Math.round(subtotalPaise * (tax.sgst || 0) / 100);
-    return { cgstAmount, sgstAmount, total: subtotalPaise + cgstAmount + sgstAmount };
+    return { cgstAmount, sgstAmount, total: Math.floor((subtotalPaise + cgstAmount + sgstAmount + 50) / 100) * 100 };
   }, [subtotalPaise, tax]);
 const updateCart = (productId: string, field: 'boxes'|'strips'|'pieces', delta: number) => {
     setErrorMsg('');
@@ -202,7 +202,7 @@ const updateCart = (productId: string, field: 'boxes'|'strips'|'pieces', delta: 
               </div>
             ) : null}
             <p className="text-gray-500 mb-1">Total Bill Amount</p>
-            <p className="text-4xl font-bold text-blue-600 dark:text-blue-400">{formatRupees(taxBreakdown.total)}</p>
+            <p className="text-4xl font-bold text-blue-600 dark:text-blue-400">{formatPayable(taxBreakdown.total)}</p>
             {customer && (
               <p className="text-sm font-bold mt-2 text-gray-600">Customer: {customer.name}</p>
             )}
@@ -223,7 +223,7 @@ const updateCart = (productId: string, field: 'boxes'|'strips'|'pieces', delta: 
               <Banknote size={28} className={paymentMode === 'CASH' ? 'text-green-600' : 'text-gray-400'} />
               <div className="ml-4 text-left flex-1">
                 <p className="font-bold text-lg">CASH</p>
-                <p className="text-sm text-gray-500">Collect {formatRupees(taxBreakdown.total)}</p>
+                <p className="text-sm text-gray-500">Collect {formatPayable(taxBreakdown.total)}</p>
               </div>
               {paymentMode === 'CASH' && <CheckCircle size={24} className="text-green-500" />}
             </button>
@@ -371,7 +371,7 @@ const updateCart = (productId: string, field: 'boxes'|'strips'|'pieces', delta: 
           )}
           <div className="flex justify-between items-center mb-4">
             <span className="text-gray-600 dark:text-gray-400 font-bold">Total Payable</span>
-            <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">{formatRupees(taxBreakdown.total)}</span>
+            <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">{formatPayable(taxBreakdown.total)}</span>
           </div>
           <button
             onClick={handleGoToPayment}

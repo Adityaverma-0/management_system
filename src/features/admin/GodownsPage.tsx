@@ -1,3 +1,4 @@
+import OlderLogs from './OlderLogs';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useApi } from '../auth/useApi';
 import { formatRupees } from '../../domain/money';
@@ -126,6 +127,7 @@ export default function GodownsPage() {
               );
             })}</tbody>
           </table>
+          <OlderLogs url={`${API_URL}/admin/godowns/${selected}/history`} rows={history} onRows={setHistory} />
         </div>
       )}
 

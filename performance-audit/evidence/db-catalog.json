@@ -1,0 +1,472 @@
+{
+  "capturedAt": "2026-10-13T17:55:31.325Z",
+  "scope": "Configured local database; production identity unconfirmed",
+  "queries": {
+    "tables": {
+      "clientRoundTripMs": 349.11337500000036,
+      "rows": [
+        {
+          "relname": "accounting_ledger",
+          "n_live_tup": "54",
+          "n_dead_tup": "0",
+          "seq_scan": "1439",
+          "idx_scan": "8",
+          "last_analyze": null,
+          "last_autoanalyze": null
+        },
+        {
+          "relname": "api_operations",
+          "n_live_tup": "198",
+          "n_dead_tup": "0",
+          "seq_scan": "1274",
+          "idx_scan": "387",
+          "last_analyze": null,
+          "last_autoanalyze": "2026-10-12T19:25:00.854Z"
+        },
+        {
+          "relname": "app_settings",
+          "n_live_tup": "1",
+          "n_dead_tup": "6",
+          "seq_scan": "1",
+          "idx_scan": "839",
+          "last_analyze": null,
+          "last_autoanalyze": null
+        },
+        {
+          "relname": "audit_log",
+          "n_live_tup": "197",
+          "n_dead_tup": "0",
+          "seq_scan": "89",
+          "idx_scan": "0",
+          "last_analyze": null,
+          "last_autoanalyze": "2026-10-12T17:52:40.605Z"
+        },
+        {
+          "relname": "auth_sessions",
+          "n_live_tup": "70",
+          "n_dead_tup": "19",
+          "seq_scan": "4708",
+          "idx_scan": "5363",
+          "last_analyze": null,
+          "last_autoanalyze": "2026-10-13T05:54:34.696Z"
+        },
+        {
+          "relname": "customers",
+          "n_live_tup": "4",
+          "n_dead_tup": "1",
+          "seq_scan": "1468",
+          "idx_scan": "188",
+          "last_analyze": null,
+          "last_autoanalyze": "2026-10-13T07:31:18.787Z"
+        },
+        {
+          "relname": "godowns",
+          "n_live_tup": "1",
+          "n_dead_tup": "7",
+          "seq_scan": "1769",
+          "idx_scan": "2151",
+          "last_analyze": null,
+          "last_autoanalyze": null
+        },
+        {
+          "relname": "inventory_imports",
+          "n_live_tup": "1",
+          "n_dead_tup": "0",
+          "seq_scan": "9",
+          "idx_scan": "204",
+          "last_analyze": null,
+          "last_autoanalyze": null
+        },
+        {
+          "relname": "invoices",
+          "n_live_tup": "54",
+          "n_dead_tup": "28",
+          "seq_scan": "1760",
+          "idx_scan": "143",
+          "last_analyze": null,
+          "last_autoanalyze": "2026-10-11T09:01:08.976Z"
+        },
+        {
+          "relname": "products",
+          "n_live_tup": "11",
+          "n_dead_tup": "29",
+          "seq_scan": "2176",
+          "idx_scan": "706",
+          "last_analyze": null,
+          "last_autoanalyze": null
+        },
+        {
+          "relname": "purchase_lines",
+          "n_live_tup": "0",
+          "n_dead_tup": "0",
+          "seq_scan": "6",
+          "idx_scan": "2",
+          "last_analyze": null,
+          "last_autoanalyze": null
+        },
+        {
+          "relname": "purchases",
+          "n_live_tup": "0",
+          "n_dead_tup": "0",
+          "seq_scan": "9",
+          "idx_scan": "0",
+          "last_analyze": null,
+          "last_autoanalyze": null
+        },
+        {
+          "relname": "sale_items",
+          "n_live_tup": "120",
+          "n_dead_tup": "7",
+          "seq_scan": "5927",
+          "idx_scan": "7",
+          "last_analyze": null,
+          "last_autoanalyze": "2026-10-12T19:35:00.984Z"
+        },
+        {
+          "relname": "salesmen",
+          "n_live_tup": "3",
+          "n_dead_tup": "12",
+          "seq_scan": "1360",
+          "idx_scan": "6228",
+          "last_analyze": null,
+          "last_autoanalyze": null
+        },
+        {
+          "relname": "stock_ledger",
+          "n_live_tup": "309",
+          "n_dead_tup": "35",
+          "seq_scan": "2094",
+          "idx_scan": "186",
+          "last_analyze": null,
+          "last_autoanalyze": "2026-10-12T19:35:00.981Z"
+        },
+        {
+          "relname": "stock_requests",
+          "n_live_tup": "9",
+          "n_dead_tup": "8",
+          "seq_scan": "322",
+          "idx_scan": "17",
+          "last_analyze": null,
+          "last_autoanalyze": null
+        },
+        {
+          "relname": "vehicles",
+          "n_live_tup": "3",
+          "n_dead_tup": "0",
+          "seq_scan": "2280",
+          "idx_scan": "2657",
+          "last_analyze": null,
+          "last_autoanalyze": null
+        },
+        {
+          "relname": "work_days",
+          "n_live_tup": "20",
+          "n_dead_tup": "27",
+          "seq_scan": "2439",
+          "idx_scan": "243",
+          "last_analyze": null,
+          "last_autoanalyze": "2026-10-12T05:24:30.742Z"
+        }
+      ]
+    },
+    "indexes": {
+      "clientRoundTripMs": 354.92141600000014,
+      "rows": [
+        {
+          "tablename": "accounting_ledger",
+          "indexname": "accounting_ledger_pkey",
+          "indexdef": "CREATE UNIQUE INDEX accounting_ledger_pkey ON public.accounting_ledger USING btree (id)"
+        },
+        {
+          "tablename": "accounting_ledger",
+          "indexname": "idx_accounting_customer",
+          "indexdef": "CREATE INDEX idx_accounting_customer ON public.accounting_ledger USING btree (customer_id)"
+        },
+        {
+          "tablename": "accounting_ledger",
+          "indexname": "idx_accounting_ledger_work_day_id",
+          "indexdef": "CREATE INDEX idx_accounting_ledger_work_day_id ON public.accounting_ledger USING btree (work_day_id)"
+        },
+        {
+          "tablename": "api_operations",
+          "indexname": "api_operations_pkey",
+          "indexdef": "CREATE UNIQUE INDEX api_operations_pkey ON public.api_operations USING btree (actor_id, request_key)"
+        },
+        {
+          "tablename": "api_operations",
+          "indexname": "idx_api_operations_actor_op_created",
+          "indexdef": "CREATE INDEX idx_api_operations_actor_op_created ON public.api_operations USING btree (actor_id, operation, created_at)"
+        },
+        {
+          "tablename": "app_settings",
+          "indexname": "app_settings_pkey",
+          "indexdef": "CREATE UNIQUE INDEX app_settings_pkey ON public.app_settings USING btree (id)"
+        },
+        {
+          "tablename": "audit_log",
+          "indexname": "audit_log_pkey",
+          "indexdef": "CREATE UNIQUE INDEX audit_log_pkey ON public.audit_log USING btree (id)"
+        },
+        {
+          "tablename": "audit_log",
+          "indexname": "idx_audit_log_timestamp",
+          "indexdef": "CREATE INDEX idx_audit_log_timestamp ON public.audit_log USING btree (\"timestamp\" DESC)"
+        },
+        {
+          "tablename": "auth_sessions",
+          "indexname": "auth_sessions_expiry",
+          "indexdef": "CREATE INDEX auth_sessions_expiry ON public.auth_sessions USING btree (expires_at)"
+        },
+        {
+          "tablename": "auth_sessions",
+          "indexname": "auth_sessions_pkey",
+          "indexdef": "CREATE UNIQUE INDEX auth_sessions_pkey ON public.auth_sessions USING btree (token_hash)"
+        },
+        {
+          "tablename": "customers",
+          "indexname": "customers_pkey",
+          "indexdef": "CREATE UNIQUE INDEX customers_pkey ON public.customers USING btree (id)"
+        },
+        {
+          "tablename": "godowns",
+          "indexname": "godowns_pkey",
+          "indexdef": "CREATE UNIQUE INDEX godowns_pkey ON public.godowns USING btree (id)"
+        },
+        {
+          "tablename": "inventory_imports",
+          "indexname": "inventory_imports_import_ref_key",
+          "indexdef": "CREATE UNIQUE INDEX inventory_imports_import_ref_key ON public.inventory_imports USING btree (import_ref)"
+        },
+        {
+          "tablename": "inventory_imports",
+          "indexname": "inventory_imports_normalized_ref_key",
+          "indexdef": "CREATE UNIQUE INDEX inventory_imports_normalized_ref_key ON public.inventory_imports USING btree (lower(regexp_replace(btrim((import_ref)::text), '\\s+'::text, ''::text, 'g'::text)))"
+        },
+        {
+          "tablename": "inventory_imports",
+          "indexname": "inventory_imports_pkey",
+          "indexdef": "CREATE UNIQUE INDEX inventory_imports_pkey ON public.inventory_imports USING btree (id)"
+        },
+        {
+          "tablename": "invoices",
+          "indexname": "idx_invoices_calendar_date_status",
+          "indexdef": "CREATE INDEX idx_invoices_calendar_date_status ON public.invoices USING btree (calendar_date, status)"
+        },
+        {
+          "tablename": "invoices",
+          "indexname": "idx_invoices_salesman_created",
+          "indexdef": "CREATE INDEX idx_invoices_salesman_created ON public.invoices USING btree (salesman_id, created_at)"
+        },
+        {
+          "tablename": "invoices",
+          "indexname": "idx_invoices_workday",
+          "indexdef": "CREATE INDEX idx_invoices_workday ON public.invoices USING btree (work_day_id)"
+        },
+        {
+          "tablename": "invoices",
+          "indexname": "invoices_invoice_number_key",
+          "indexdef": "CREATE UNIQUE INDEX invoices_invoice_number_key ON public.invoices USING btree (invoice_number)"
+        },
+        {
+          "tablename": "invoices",
+          "indexname": "invoices_pkey",
+          "indexdef": "CREATE UNIQUE INDEX invoices_pkey ON public.invoices USING btree (id)"
+        },
+        {
+          "tablename": "products",
+          "indexname": "products_pkey",
+          "indexdef": "CREATE UNIQUE INDEX products_pkey ON public.products USING btree (id)"
+        },
+        {
+          "tablename": "purchase_lines",
+          "indexname": "purchase_lines_pkey",
+          "indexdef": "CREATE UNIQUE INDEX purchase_lines_pkey ON public.purchase_lines USING btree (id)"
+        },
+        {
+          "tablename": "purchases",
+          "indexname": "purchases_invoice_ref_key",
+          "indexdef": "CREATE UNIQUE INDEX purchases_invoice_ref_key ON public.purchases USING btree (invoice_ref)"
+        },
+        {
+          "tablename": "purchases",
+          "indexname": "purchases_pkey",
+          "indexdef": "CREATE UNIQUE INDEX purchases_pkey ON public.purchases USING btree (id)"
+        },
+        {
+          "tablename": "sale_items",
+          "indexname": "idx_sale_items_invoice_id",
+          "indexdef": "CREATE INDEX idx_sale_items_invoice_id ON public.sale_items USING btree (invoice_id)"
+        },
+        {
+          "tablename": "sale_items",
+          "indexname": "sale_items_pkey",
+          "indexdef": "CREATE UNIQUE INDEX sale_items_pkey ON public.sale_items USING btree (id)"
+        },
+        {
+          "tablename": "salesmen",
+          "indexname": "salesmen_phone_unique",
+          "indexdef": "CREATE UNIQUE INDEX salesmen_phone_unique ON public.salesmen USING btree (phone)"
+        },
+        {
+          "tablename": "salesmen",
+          "indexname": "salesmen_pkey",
+          "indexdef": "CREATE UNIQUE INDEX salesmen_pkey ON public.salesmen USING btree (id)"
+        },
+        {
+          "tablename": "stock_ledger",
+          "indexname": "idx_stock_ledger_loc_prod",
+          "indexdef": "CREATE INDEX idx_stock_ledger_loc_prod ON public.stock_ledger USING btree (location_id, product_id)"
+        },
+        {
+          "tablename": "stock_ledger",
+          "indexname": "idx_stock_ledger_location_product",
+          "indexdef": "CREATE INDEX idx_stock_ledger_location_product ON public.stock_ledger USING btree (location_id, product_id)"
+        },
+        {
+          "tablename": "stock_ledger",
+          "indexname": "idx_stock_ledger_work_day_id",
+          "indexdef": "CREATE INDEX idx_stock_ledger_work_day_id ON public.stock_ledger USING btree (work_day_id)"
+        },
+        {
+          "tablename": "stock_ledger",
+          "indexname": "stock_ledger_pkey",
+          "indexdef": "CREATE UNIQUE INDEX stock_ledger_pkey ON public.stock_ledger USING btree (id)"
+        },
+        {
+          "tablename": "stock_requests",
+          "indexname": "idx_stock_requests_salesman",
+          "indexdef": "CREATE INDEX idx_stock_requests_salesman ON public.stock_requests USING btree (salesman_id)"
+        },
+        {
+          "tablename": "stock_requests",
+          "indexname": "idx_stock_requests_status",
+          "indexdef": "CREATE INDEX idx_stock_requests_status ON public.stock_requests USING btree (status)"
+        },
+        {
+          "tablename": "stock_requests",
+          "indexname": "idx_stock_requests_status_time",
+          "indexdef": "CREATE INDEX idx_stock_requests_status_time ON public.stock_requests USING btree (status, requested_at DESC)"
+        },
+        {
+          "tablename": "stock_requests",
+          "indexname": "idx_stock_requests_workday",
+          "indexdef": "CREATE INDEX idx_stock_requests_workday ON public.stock_requests USING btree (work_day_id)"
+        },
+        {
+          "tablename": "stock_requests",
+          "indexname": "stock_requests_pkey",
+          "indexdef": "CREATE UNIQUE INDEX stock_requests_pkey ON public.stock_requests USING btree (id)"
+        },
+        {
+          "tablename": "vehicles",
+          "indexname": "vehicles_pkey",
+          "indexdef": "CREATE UNIQUE INDEX vehicles_pkey ON public.vehicles USING btree (id)"
+        },
+        {
+          "tablename": "work_days",
+          "indexname": "idx_work_days_salesman_opened",
+          "indexdef": "CREATE INDEX idx_work_days_salesman_opened ON public.work_days USING btree (salesman_id, opened_at DESC)"
+        },
+        {
+          "tablename": "work_days",
+          "indexname": "idx_work_days_state",
+          "indexdef": "CREATE INDEX idx_work_days_state ON public.work_days USING btree (state)"
+        },
+        {
+          "tablename": "work_days",
+          "indexname": "work_days_active_salesman",
+          "indexdef": "CREATE UNIQUE INDEX work_days_active_salesman ON public.work_days USING btree (salesman_id) WHERE (state <> 'CLOSED'::day_state)"
+        },
+        {
+          "tablename": "work_days",
+          "indexname": "work_days_active_vehicle",
+          "indexdef": "CREATE UNIQUE INDEX work_days_active_vehicle ON public.work_days USING btree (vehicle_id) WHERE (state <> 'CLOSED'::day_state)"
+        },
+        {
+          "tablename": "work_days",
+          "indexname": "work_days_pkey",
+          "indexdef": "CREATE UNIQUE INDEX work_days_pkey ON public.work_days USING btree (work_day_id)"
+        }
+      ]
+    },
+    "extensions": {
+      "clientRoundTripMs": 286.2694169999995,
+      "rows": [
+        {
+          "extname": "plpgsql"
+        }
+      ]
+    },
+    "settings": {
+      "clientRoundTripMs": 323.7040829999996,
+      "rows": [
+        {
+          "name": "max_connections",
+          "setting": "901"
+        },
+        {
+          "name": "shared_buffers",
+          "setting": "29440"
+        },
+        {
+          "name": "statement_timeout",
+          "setting": "5000"
+        },
+        {
+          "name": "transaction_read_only",
+          "setting": "on"
+        }
+      ]
+    }
+  },
+  "representativePlans": {
+    "snapshotInvoices": {
+      "clientRoundTripMs": 310.96383400000013,
+      "planningMs": 0.145,
+      "executionMs": 0.138,
+      "actualRows": 46,
+      "sharedHitBlocks": 6,
+      "sharedReadBlocks": 0
+    },
+    "snapshotItems": {
+      "clientRoundTripMs": 285.11616700000013,
+      "planningMs": 0.118,
+      "executionMs": 0.07,
+      "actualRows": 103,
+      "sharedHitBlocks": 6,
+      "sharedReadBlocks": 0
+    },
+    "snapshotLedger": {
+      "clientRoundTripMs": 380.649042,
+      "planningMs": 0.102,
+      "executionMs": 0.119,
+      "actualRows": 239,
+      "sharedHitBlocks": 11,
+      "sharedReadBlocks": 0
+    },
+    "monthSales": {
+      "clientRoundTripMs": 299.267417,
+      "planningMs": 0.796,
+      "executionMs": 0.09,
+      "actualRows": 54,
+      "sharedHitBlocks": 4,
+      "sharedReadBlocks": 0
+    },
+    "stockBalance": {
+      "clientRoundTripMs": 300.6088329999993,
+      "planningMs": 0.115,
+      "executionMs": 0.162,
+      "actualRows": 10,
+      "sharedHitBlocks": 11,
+      "sharedReadBlocks": 0
+    },
+    "stockRequests": {
+      "clientRoundTripMs": 570.8514999999998,
+      "planningMs": 0.261,
+      "executionMs": 0.126,
+      "actualRows": 9,
+      "sharedHitBlocks": 5,
+      "sharedReadBlocks": 0
+    }
+  }
+}

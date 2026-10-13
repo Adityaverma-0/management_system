@@ -1,3 +1,4 @@
+import OlderLogs from './OlderLogs';
 import { useCallback, useEffect, useState, useRef } from 'react';
 import { useApi } from '../auth/useApi';
 import { formatRupees } from '../../domain/money';
@@ -112,7 +113,7 @@ export default function VehiclesPage() {
           <h4 className="font-semibold">Movement history</h4>
           <table className="min-w-full text-sm">
             <thead className="text-left text-gray-500"><tr><th className="p-2">When</th><th className="p-2">Type</th><th className="p-2">Product</th><th className="p-2">Qty</th><th className="p-2">Reason</th></tr></thead>
-            <tbody>{history.slice(0, 50).map(r => (
+            <tbody>{history.map(r => (
               <tr key={r.id} className="border-t dark:border-gray-700">
                 <td className="p-2">{formatDateTimeIST(r.timestamp ?? r.created_at)}</td>
                 <td className="p-2">{r.type}</td>
@@ -122,6 +123,7 @@ export default function VehiclesPage() {
               </tr>
             ))}</tbody>
           </table>
+          <OlderLogs url={`${API_URL}/admin/vehicles/${selected}/history`} rows={history} onRows={setHistory} />
         </div>
       )}
     </div>

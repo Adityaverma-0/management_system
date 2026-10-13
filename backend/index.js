@@ -55,6 +55,8 @@ export async function initializeDatabase() {
     await client.query(fs.readFileSync(path.join(backendDir, 'migrations/003_tax_settings.sql'), 'utf8'));
     await client.query(fs.readFileSync(path.join(backendDir, 'migrations/004_stock_requests.sql'), 'utf8'));
     await client.query(fs.readFileSync(path.join(backendDir, 'migrations/005_performance_indexes.sql'), 'utf8'));
+    await client.query(fs.readFileSync(path.join(backendDir, 'migrations/006_bill_round_off.sql'), 'utf8'));
+    await client.query(fs.readFileSync(path.join(backendDir, 'migrations/007_log_pagination_index.sql'), 'utf8'));
     await client.query('COMMIT');
   } catch (error) {
     await client.query('ROLLBACK');

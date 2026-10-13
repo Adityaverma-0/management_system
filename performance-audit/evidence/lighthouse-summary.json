@@ -1,0 +1,378 @@
+[
+  {
+    "name": "admin-mobile",
+    "url": "https://management-system-three-rho.vercel.app/login",
+    "timestamp": "2026-10-13T17:52:15.808Z",
+    "lighthouse": "13.5.0",
+    "scores": {
+      "performance": 100,
+      "accessibility": 72,
+      "best-practices": 100,
+      "seo": 82
+    },
+    "metrics": {
+      "first-contentful-paint": 1479.039,
+      "largest-contentful-paint": 1479.039,
+      "speed-index": 1738.9351999979972,
+      "total-blocking-time": 0,
+      "cumulative-layout-shift": 0,
+      "interactive": 1479.039,
+      "server-response-time": 71
+    },
+    "modeledTTFBms": 622,
+    "resources": [
+      {
+        "resourceType": "total",
+        "label": "Total",
+        "requestCount": 5,
+        "transferSize": 114409
+      },
+      {
+        "resourceType": "script",
+        "label": "Script",
+        "requestCount": 1,
+        "transferSize": 106764
+      },
+      {
+        "resourceType": "stylesheet",
+        "label": "Stylesheet",
+        "requestCount": 1,
+        "transferSize": 5937
+      },
+      {
+        "resourceType": "document",
+        "label": "Document",
+        "requestCount": 1,
+        "transferSize": 943
+      },
+      {
+        "resourceType": "other",
+        "label": "Other",
+        "requestCount": 2,
+        "transferSize": 765
+      },
+      {
+        "resourceType": "image",
+        "label": "Image",
+        "requestCount": 0,
+        "transferSize": 0
+      },
+      {
+        "resourceType": "media",
+        "label": "Media",
+        "requestCount": 0,
+        "transferSize": 0
+      },
+      {
+        "resourceType": "font",
+        "label": "Font",
+        "requestCount": 0,
+        "transferSize": 0
+      },
+      {
+        "resourceType": "third-party",
+        "label": "Third-party",
+        "requestCount": 0,
+        "transferSize": 0
+      }
+    ],
+    "throttling": {
+      "rttMs": 150,
+      "throughputKbps": 1638.4,
+      "requestLatencyMs": 562.5,
+      "downloadThroughputKbps": 1474.5600000000002,
+      "uploadThroughputKbps": 675,
+      "cpuSlowdownMultiplier": 4
+    },
+    "environment": {
+      "networkUserAgent": "Mozilla/5.0 (Linux; Android 11; moto g power (2022)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Mobile Safari/537.36",
+      "hostUserAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+      "benchmarkIndex": 2927.5,
+      "credits": {
+        "axe-core": "4.14.0"
+      }
+    }
+  },
+  {
+    "name": "admin-desktop",
+    "url": "https://management-system-three-rho.vercel.app/login",
+    "timestamp": "2026-10-13T17:52:58.540Z",
+    "lighthouse": "13.5.0",
+    "scores": {
+      "performance": 100,
+      "accessibility": 72,
+      "best-practices": 100,
+      "seo": 82
+    },
+    "metrics": {
+      "first-contentful-paint": 363,
+      "largest-contentful-paint": 363,
+      "speed-index": 471.71982499808075,
+      "total-blocking-time": 0,
+      "cumulative-layout-shift": 0,
+      "interactive": 363,
+      "server-response-time": 50
+    },
+    "modeledTTFBms": 237,
+    "resources": [
+      {
+        "resourceType": "total",
+        "label": "Total",
+        "requestCount": 5,
+        "transferSize": 114434
+      },
+      {
+        "resourceType": "script",
+        "label": "Script",
+        "requestCount": 1,
+        "transferSize": 106790
+      },
+      {
+        "resourceType": "stylesheet",
+        "label": "Stylesheet",
+        "requestCount": 1,
+        "transferSize": 5907
+      },
+      {
+        "resourceType": "document",
+        "label": "Document",
+        "requestCount": 1,
+        "transferSize": 945
+      },
+      {
+        "resourceType": "other",
+        "label": "Other",
+        "requestCount": 2,
+        "transferSize": 792
+      },
+      {
+        "resourceType": "image",
+        "label": "Image",
+        "requestCount": 0,
+        "transferSize": 0
+      },
+      {
+        "resourceType": "media",
+        "label": "Media",
+        "requestCount": 0,
+        "transferSize": 0
+      },
+      {
+        "resourceType": "font",
+        "label": "Font",
+        "requestCount": 0,
+        "transferSize": 0
+      },
+      {
+        "resourceType": "third-party",
+        "label": "Third-party",
+        "requestCount": 0,
+        "transferSize": 0
+      }
+    ],
+    "throttling": {
+      "rttMs": 40,
+      "throughputKbps": 10240,
+      "requestLatencyMs": 0,
+      "downloadThroughputKbps": 0,
+      "uploadThroughputKbps": 0,
+      "cpuSlowdownMultiplier": 1
+    },
+    "environment": {
+      "networkUserAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "hostUserAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+      "benchmarkIndex": 2947.5,
+      "credits": {
+        "axe-core": "4.14.0"
+      }
+    }
+  },
+  {
+    "name": "salesman-mobile",
+    "url": "https://management-system-zpv1.vercel.app/",
+    "timestamp": "2026-10-13T17:53:27.589Z",
+    "lighthouse": "13.5.0",
+    "scores": {
+      "performance": 98,
+      "accessibility": 63,
+      "best-practices": 100,
+      "seo": 82
+    },
+    "metrics": {
+      "first-contentful-paint": 1299.5065,
+      "largest-contentful-paint": 1299.5065,
+      "speed-index": 3840.9429680059316,
+      "total-blocking-time": 0,
+      "cumulative-layout-shift": 0,
+      "interactive": 1299.5065,
+      "server-response-time": 46
+    },
+    "modeledTTFBms": 639,
+    "resources": [
+      {
+        "resourceType": "total",
+        "label": "Total",
+        "requestCount": 4,
+        "transferSize": 93507
+      },
+      {
+        "resourceType": "script",
+        "label": "Script",
+        "requestCount": 1,
+        "transferSize": 85505
+      },
+      {
+        "resourceType": "stylesheet",
+        "label": "Stylesheet",
+        "requestCount": 1,
+        "transferSize": 6298
+      },
+      {
+        "resourceType": "document",
+        "label": "Document",
+        "requestCount": 1,
+        "transferSize": 951
+      },
+      {
+        "resourceType": "other",
+        "label": "Other",
+        "requestCount": 1,
+        "transferSize": 753
+      },
+      {
+        "resourceType": "image",
+        "label": "Image",
+        "requestCount": 0,
+        "transferSize": 0
+      },
+      {
+        "resourceType": "media",
+        "label": "Media",
+        "requestCount": 0,
+        "transferSize": 0
+      },
+      {
+        "resourceType": "font",
+        "label": "Font",
+        "requestCount": 0,
+        "transferSize": 0
+      },
+      {
+        "resourceType": "third-party",
+        "label": "Third-party",
+        "requestCount": 0,
+        "transferSize": 0
+      }
+    ],
+    "throttling": {
+      "rttMs": 150,
+      "throughputKbps": 1638.4,
+      "requestLatencyMs": 562.5,
+      "downloadThroughputKbps": 1474.5600000000002,
+      "uploadThroughputKbps": 675,
+      "cpuSlowdownMultiplier": 4
+    },
+    "environment": {
+      "networkUserAgent": "Mozilla/5.0 (Linux; Android 11; moto g power (2022)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Mobile Safari/537.36",
+      "hostUserAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+      "benchmarkIndex": 3015.5,
+      "credits": {
+        "axe-core": "4.14.0"
+      }
+    }
+  },
+  {
+    "name": "salesman-desktop",
+    "url": "https://management-system-zpv1.vercel.app/",
+    "timestamp": "2026-10-13T17:54:25.951Z",
+    "lighthouse": "13.5.0",
+    "scores": {
+      "performance": 100,
+      "accessibility": 63,
+      "best-practices": 100,
+      "seo": 82
+    },
+    "metrics": {
+      "first-contentful-paint": 325.04100000000005,
+      "largest-contentful-paint": 325.04100000000005,
+      "speed-index": 336.6261362525996,
+      "total-blocking-time": 0,
+      "cumulative-layout-shift": 0,
+      "interactive": 325.04100000000005,
+      "server-response-time": 51
+    },
+    "modeledTTFBms": 188,
+    "resources": [
+      {
+        "resourceType": "total",
+        "label": "Total",
+        "requestCount": 4,
+        "transferSize": 93482
+      },
+      {
+        "resourceType": "script",
+        "label": "Script",
+        "requestCount": 1,
+        "transferSize": 85483
+      },
+      {
+        "resourceType": "stylesheet",
+        "label": "Stylesheet",
+        "requestCount": 1,
+        "transferSize": 6294
+      },
+      {
+        "resourceType": "document",
+        "label": "Document",
+        "requestCount": 1,
+        "transferSize": 952
+      },
+      {
+        "resourceType": "other",
+        "label": "Other",
+        "requestCount": 1,
+        "transferSize": 753
+      },
+      {
+        "resourceType": "image",
+        "label": "Image",
+        "requestCount": 0,
+        "transferSize": 0
+      },
+      {
+        "resourceType": "media",
+        "label": "Media",
+        "requestCount": 0,
+        "transferSize": 0
+      },
+      {
+        "resourceType": "font",
+        "label": "Font",
+        "requestCount": 0,
+        "transferSize": 0
+      },
+      {
+        "resourceType": "third-party",
+        "label": "Third-party",
+        "requestCount": 0,
+        "transferSize": 0
+      }
+    ],
+    "throttling": {
+      "rttMs": 40,
+      "throughputKbps": 10240,
+      "requestLatencyMs": 0,
+      "downloadThroughputKbps": 0,
+      "uploadThroughputKbps": 0,
+      "cpuSlowdownMultiplier": 1
+    },
+    "environment": {
+      "networkUserAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "hostUserAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+      "benchmarkIndex": 3024.5,
+      "credits": {
+        "axe-core": "4.14.0"
+      }
+    }
+  }
+]

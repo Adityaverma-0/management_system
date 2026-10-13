@@ -1,0 +1,35 @@
+backend/index.js:197:app.post('/api/v2/admin/inventory/import', async (req, res) => {
+backend/index.js:245:app.post('/api/v2/admin/extract-invoice', async (req, res) => {
+backend/security.js:45:  app.post('/api/v2/admin/login', limiter, login('admin'));
+backend/security.js:46:  app.post('/api/v2/salesman/login', limiter, login('salesman'));
+backend/security.js:79:  app.get('/api/v2/session', (req, res) => res.json({ user: req.user }));
+backend/security.js:80:  app.post('/api/v2/logout', async (req, res) => {
+backend/operations.js:109:  app.get('/api/v2/admin/:table(godowns|products|salesmen|vehicles)',endpoint(async req=>{
+backend/operations.js:142:  app.post('/api/v2/admin/:table(godowns|products|salesmen|vehicles)',saveMaster);
+backend/operations.js:143:  app.put('/api/v2/admin/:table(godowns|products|salesmen|vehicles)/:id',saveMaster);
+backend/operations.js:144:  app.post('/api/v2/admin/salesmen/:id/:action(set-pin|reset-pin)',endpoint(async req=>transaction(pool,async c=>{
+backend/operations.js:152:  app.get('/api/v2/admin/:location_type(godowns|vehicles)/:id/stock',endpoint(async req=>(await pool.query(`SELECT p.id AS product_id,p.name AS product_name,p.price_paise,p.pieces_per_box,p.strips_per_box,p.units_per_strip,(${sumSQL.replaceAll('type','l.type').replaceAll('quantity_pieces','l.quantity_pieces')})::integer AS quantity_pieces FROM products p LEFT JOIN stock_ledger l ON l.product_id=p.id AND l.location_id=$1 GROUP BY p.id ORDER BY p.name`,[req.params.id])).rows));
+backend/operations.js:153:  app.get('/api/v2/admin/:location_type(godowns|vehicles)/:id/history',endpoint(async req=>(await pool.query('SELECT l.*,p.name AS product_name FROM stock_ledger l JOIN products p ON p.id=l.product_id WHERE l.location_id=$1 ORDER BY l.timestamp DESC LIMIT 200',[req.params.id])).rows));
+backend/operations.js:154:  app.get('/api/v2/admin/audit',endpoint(async ()=> (await pool.query('SELECT * FROM audit_log ORDER BY timestamp DESC LIMIT 200')).rows));
+backend/operations.js:156:  app.get('/api/v2/admin/sales', endpoint(async req => {
+backend/operations.js:212:  app.post('/api/v2/admin/stock/adjust',endpoint(req=>operation(pool,req,'adjust',async c=>{
+backend/operations.js:229:  app.get('/api/v2/salesman/snapshot',endpoint(req=>transaction(pool,async c=>{await c.query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY');return snapshot(c,req.user);}))); 
+backend/operations.js:230:  app.post('/api/v2/salesman/work-days',endpoint(req=>operation(pool,req,'start-day',async c=>{
+backend/operations.js:246:  app.post('/api/v2/salesman/work-days/:id/state',endpoint(req=>operation(pool,req,'day-state:'+req.params.id,async c=>{
+backend/operations.js:252:  app.post('/api/v2/salesman/loads',endpoint(req=>operation(pool,req,'load',async () => {
+backend/operations.js:256:  app.post('/api/v2/salesman/stock-requests',endpoint(req=>operation(pool,req,'stock-request',async c=>{
+backend/operations.js:283:  app.get('/api/v2/salesman/stock-requests',endpoint(async req=>{
+backend/operations.js:309:  app.get('/api/v2/admin/stock-requests',endpoint(async () => {
+backend/operations.js:335:  app.post('/api/v2/admin/stock-requests/:id/approve',endpoint(req=>operation(pool,req,'approve-stock:'+req.params.id,async c=>{
+backend/operations.js:369:  app.post('/api/v2/admin/stock-requests/:id/reject',endpoint(req=>operation(pool,req,'reject-stock:'+req.params.id,async c=>{
+backend/operations.js:382:  app.post('/api/v2/salesman/customers',endpoint(req=>operation(pool,req,'customer',async c=>{
+backend/operations.js:389:  app.post('/api/v2/salesman/sales',endpoint(req=>operation(pool,req,'sale',async c=>{
+backend/operations.js:418:  app.post('/api/v2/salesman/invoices/:id/cancel',endpoint(req=>operation(pool,req,'cancel:'+req.params.id,async c=>{
+backend/operations.js:428:  app.post('/api/v2/unload-requests',endpoint(req=>operation(pool,req,'unload',async c=>{
+backend/operations.js:452:  app.get('/api/v2/unload-requests',endpoint(async()=> (await pool.query('SELECT * FROM work_days WHERE request_data IS NOT NULL ORDER BY requested_at DESC LIMIT 200')).rows.map(d=>({id:d.work_day_id,status:d.state==='CLOSED'?'APPROVED':d.state==='UNLOAD_REQUESTED'?'PENDING':d.state,requestedAt:number(d.requested_at),request_data:d.request_data}))));
+backend/operations.js:453:  app.get('/api/v2/unload-requests/:id',endpoint(req=>transaction(pool,async c=>{const d=await ownDay(c,req.params.id,req.user);return {status:d.state==='CLOSED'?'APPROVED':d.state,adminNote:d.admin_note};})));
+backend/operations.js:454:  app.post('/api/v2/unload-requests/:id/send-back',endpoint(req=>operation(pool,req,'send-back:'+req.params.id,async c=>{
+backend/operations.js:457:  app.post('/api/v2/unload-requests/:id/approve',endpoint(req=>operation(pool,req,'approve:'+req.params.id,async c=>{
+backend/operations.js:466:  app.get("/api/v2/settings/tax", endpoint(async req => (await pool.query("SELECT data FROM app_settings WHERE id=$1", ["tax"])).rows[0]?.data || {cgst:0, sgst:0}));
+backend/operations.js:467:  app.get("/api/v2/admin/settings/tax", endpoint(async req => (await pool.query("SELECT data FROM app_settings WHERE id=$1", ["tax"])).rows[0]?.data || {cgst:0, sgst:0}));
+backend/operations.js:468:  app.put("/api/v2/admin/settings/tax", endpoint(async req => {

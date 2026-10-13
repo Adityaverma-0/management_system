@@ -1,0 +1,15 @@
+HTTP/2 200 
+access-control-allow-origin: *
+age: 1361
+cache-control: public, max-age=0, must-revalidate
+content-disposition: inline; filename="index-DQ5SyLIS.js"
+content-encoding: gzip
+content-type: application/javascript; charset=utf-8
+date: Tue, 13 Oct 2026 17:52:28 GMT
+etag: W/"e0952d5ff60d449d0f5ad71fef084d6f"
+last-modified: Tue, 13 Oct 2026 17:29:46 GMT
+server: Vercel
+strict-transport-security: max-age=63072000; includeSubDomains; preload
+x-vercel-cache: HIT
+x-vercel-id: bom1::qbzqd-1791913948286-43e9089fcfc7
+

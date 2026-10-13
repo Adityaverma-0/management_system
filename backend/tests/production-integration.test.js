@@ -23,6 +23,7 @@ test('production contracts: auth, real stock, concurrency, retries, receipts and
   await db.query('ALTER TABLE salesmen ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255), ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT TRUE');
   await db.query(fs.readFileSync(new URL('../migrations/001_inventory_import.sql',import.meta.url),'utf8'));
   await db.query(fs.readFileSync(new URL('../migrations/002_production_integrity.sql',import.meta.url),'utf8'));
+  for(const file of ['003_tax_settings.sql','004_stock_requests.sql','005_performance_indexes.sql','006_bill_round_off.sql','007_log_pagination_index.sql']) await db.query(fs.readFileSync(new URL('../migrations/'+file,import.meta.url),'utf8'));
   const password=crypto.randomBytes(20).toString('hex');process.env.ADMIN_PASSWORD_HASH=hashPassword(password);
   const app=express();app.use(express.json());installSecurity(app,db);installOperations(app,db);
   server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));
@@ -46,14 +47,15 @@ test('production contracts: auth, real stock, concurrency, retries, receipts and
   assert.equal((await call('/ADMIN/products',undefined,s)).status,403);
   assert.equal((await call('/unload-requests',undefined,s)).status,403);
   assert.equal((await call('/admin/products',{name:'bad','name) VALUES (1); --':'unsafe'},a)).status,400);
-  const receipt={invoice_ref:'TEST-RECEIPT',godown_id:g.id,lines:[{product_id:p.id,quantity_pieces:100}]};const key=crypto.randomUUID();
-  const purchase=await ok('/admin/purchases',receipt,a,key);assert.equal((await ok('/admin/purchases',receipt,a,key)).id,purchase.id);
+  const receipt={godown_id:g.id,product_id:p.id,quantity_pieces:100,kind:'IN',reason:'Regression fixture'};const key=crypto.randomUUID();
+  const purchase=await ok('/admin/stock/adjust',receipt,a,key);assert.equal((await ok('/admin/stock/adjust',receipt,a,key)).id,purchase.id);
   assert.equal(await balance(db,g.id,p.id),100);assert.equal(await balance(db,g2.id,p.id),0);
-  assert.equal((await call('/admin/purchases',{...receipt,invoice_ref:'INVALID',lines:[{product_id:p.id,quantity_pieces:-1}]},a)).status,400);
-  assert.equal((await call('/admin/purchases',receipt,a)).status,409);
+  assert.equal((await call('/admin/stock/adjust',{...receipt,quantity_pieces:-1},a)).status,400);
+  assert.equal((await call('/admin/stock/adjust',{...receipt,quantity_pieces:101},a,key)).status,409);
   const day=(await ok('/salesman/work-days',{},s)).workDayId;
   await ok(`/salesman/work-days/${day}/state`,{state:'LOADING'},s);
-  await ok('/salesman/loads',{workDayId:day,items:[{productId:p.id,quantityPieces:100}]},s);
+  const load=await ok('/salesman/stock-requests',{workDayId:day,items:[{productId:p.id,quantityPieces:100}]},s);
+  await ok(`/admin/stock-requests/${load.id}/approve`,{},a);
   assert.equal(await balance(db,g.id,p.id),0);assert.equal(await balance(db,v.id,p.id),100);
   await ok(`/salesman/work-days/${day}/state`,{state:'ON_ROUTE'},s);
   const sale={workDayId:day,customerId:'walk-in',items:[{productId:p.id,quantityPieces:10}],totalAmountPaise:1000,paymentMode:'CASH'};

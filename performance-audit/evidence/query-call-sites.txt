@@ -1,0 +1,107 @@
+backend/security.js:36:        const { rows } = await pool.query('SELECT * FROM salesmen WHERE phone=$1', [String(body.mobile || '')]);
+backend/security.js:41:      await pool.query('INSERT INTO auth_sessions(token_hash,user_id,role,expires_at) VALUES($1,$2,$3,now()+interval \'12 hours\')', [digest(token), user.id, role]);
+backend/security.js:64:      const { rows } = await pool.query('SELECT * FROM auth_sessions WHERE token_hash=$1 AND expires_at>now()', [digest(token)]);
+backend/security.js:69:        const { rows: people } = await pool.query('SELECT * FROM salesmen WHERE id=$1 AND active=TRUE AND status=\'ACTIVE\'', [session.user_id]);
+backend/security.js:81:    try { await pool.query('DELETE FROM auth_sessions WHERE token_hash=$1', [digest(req.headers.authorization.slice(7))]); res.json({ success: true }); }
+backend/index.js:35:  await client.query(
+backend/index.js:43:  await pool.query('SELECT NOW()');
+backend/index.js:44:  await pool.query('ALTER TABLE salesmen ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255)');
+backend/index.js:45:  await pool.query('ALTER TABLE salesmen ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT TRUE');
+backend/index.js:48:    await client.query('BEGIN');
+backend/index.js:49:    await client.query(`CREATE TABLE IF NOT EXISTS inventory_imports (
+backend/index.js:53:    await client.query(fs.readFileSync(path.join(backendDir, 'migrations/001_inventory_import.sql'), 'utf8'));
+backend/index.js:54:    await client.query(fs.readFileSync(path.join(backendDir, 'migrations/002_production_integrity.sql'), 'utf8'));
+backend/index.js:55:    await client.query(fs.readFileSync(path.join(backendDir, 'migrations/003_tax_settings.sql'), 'utf8'));
+backend/index.js:56:    await client.query(fs.readFileSync(path.join(backendDir, 'migrations/004_stock_requests.sql'), 'utf8'));
+backend/index.js:57:    await client.query(fs.readFileSync(path.join(backendDir, 'migrations/005_performance_indexes.sql'), 'utf8'));
+backend/index.js:58:    await client.query('COMMIT');
+backend/index.js:60:    await client.query('ROLLBACK');
+backend/index.js:145:    await client.query('BEGIN');
+backend/index.js:146:    const godown = await client.query('SELECT id FROM godowns WHERE id = $1 AND active = TRUE FOR SHARE', [godownId]);
+backend/index.js:148:    const { rows: products } = await client.query('SELECT * FROM products WHERE id = ANY($1::varchar[]) ORDER BY id FOR SHARE', [[...new Set(ids)].sort()]);
+backend/index.js:177:    await client.query(`INSERT INTO inventory_imports
+backend/index.js:182:      await client.query(`INSERT INTO stock_ledger
+backend/index.js:188:    await client.query('COMMIT');
+backend/index.js:191:    if (client) await client.query('ROLLBACK').catch(() => {});
+backend/index.js:252:    const { rows: products } = await pool.query('SELECT * FROM products WHERE active = TRUE');
+backend/operations.js:21:  try { await client.query('BEGIN'); const result = await fn(client); await client.query('COMMIT'); return result; }
+backend/operations.js:22:  catch (e) { await client.query('ROLLBACK').catch(() => {}); throw e; }
+backend/operations.js:25:const audit = (c, action, entity, details = {}) => c.query('INSERT INTO audit_log(id,timestamp,action,entity,details) VALUES($1,$2,$3,$4,$5)', [uid(),Date.now(),action,entity,{...details,actor_id:auditContext.getStore()?.id}]);
+backend/operations.js:27:  return number((await c.query(`SELECT ${sumSQL} AS qty FROM stock_ledger WHERE location_id=$1 AND product_id=$2`, [location, product])).rows[0].qty);
+backend/operations.js:30:  for (const key of locations.flatMap(l => products.map(p => `${l}:${p}`)).sort()) await c.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', ['stock:' + key]);
+backend/operations.js:34:  await c.query('INSERT INTO stock_ledger(id,timestamp,type,product_id,quantity_pieces,location_id,reference_id,work_day_id,reason) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)', [uid(),Date.now(),type,product,integer(quantity,'Quantity',1),location,ref,day || null,reason || null]);
+backend/operations.js:40:  const { rows } = await c.query('SELECT * FROM products WHERE id=ANY($1::varchar[]) ORDER BY id FOR SHARE', [ids]);
+backend/operations.js:49:  if (!(await c.query('SELECT id FROM godowns WHERE id=$1 AND active=TRUE FOR SHARE',[id])).rows.length) throw new ApiError('Select an active godown.');
+backend/operations.js:52:  const day = (await c.query('SELECT * FROM work_days WHERE work_day_id=$1 FOR UPDATE',[id])).rows[0];
+backend/operations.js:67:    await c.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))',[`operation:${req.user.id}:${key}`]);
+backend/operations.js:68:    const prior = (await c.query('SELECT * FROM api_operations WHERE actor_id=$1 AND request_key=$2',[req.user.id,key])).rows[0];
+backend/operations.js:71:    await c.query('INSERT INTO api_operations(actor_id,request_key,operation,payload_hash,response) VALUES($1,$2,$3,$4,$5)',[req.user.id,key,name,hash,JSON.stringify(result)]);
+backend/operations.js:83:  const products = (await c.query('SELECT * FROM products ORDER BY name')).rows.map(productDto);
+backend/operations.js:84:  const days = (await c.query('SELECT w.*,s.name AS salesman_name,v.name AS vehicle_name,g.name AS godown_name FROM work_days w JOIN salesmen s ON s.id=w.salesman_id JOIN vehicles v ON v.id=w.vehicle_id JOIN godowns g ON g.id=w.godown_id WHERE w.salesman_id=$1 ORDER BY w.opened_at DESC',[user.id])).rows;
+backend/operations.js:86:  const rawInvoices = (await c.query('SELECT i.*, s.name as salesman_name, s.phone as salesman_phone FROM invoices i LEFT JOIN salesmen s ON i.salesman_id = s.id WHERE i.salesman_id=$1 ORDER BY i.created_at',[user.id])).rows;
+backend/operations.js:87:  const items = (await c.query('SELECT * FROM sale_items WHERE invoice_id=ANY($1::varchar[])',[rawInvoices.map(i=>i.id)])).rows;
+backend/operations.js:89:  const assignment = (await c.query('SELECT v.id,v.godown_id FROM vehicles v JOIN salesmen s ON s.vehicle_id=v.id WHERE s.id=$1 AND v.active=TRUE',[user.id])).rows[0];
+backend/operations.js:92:  const rawLedger = (await c.query('SELECT * FROM stock_ledger WHERE work_day_id=ANY($1::varchar[]) OR location_id=ANY($2::varchar[])',[ids,locations])).rows;
+backend/operations.js:94:  const loads = (await c.query("SELECT response FROM api_operations WHERE actor_id=$1 AND operation='load' ORDER BY created_at",[user.id])).rows.map(x=>x.response);
+backend/operations.js:95:  const accounting = (await c.query('SELECT * FROM accounting_ledger WHERE work_day_id=ANY($1::varchar[])',[ids])).rows.map(a=>({id:a.id,timestamp:number(a.timestamp),type:a.type,amountPaise:number(a.amount_paise),customerId:a.customer_id,invoiceId:a.invoice_id,workDayId:a.work_day_id}));
+backend/operations.js:96:  const customers = (await c.query('SELECT * FROM customers ORDER BY name')).rows.map(customerDto);
+backend/operations.js:97:  const taxRes = await c.query("SELECT data FROM app_settings WHERE id='tax'");
+backend/operations.js:110:    const rows=(await pool.query(req.params.table === 'vehicles' ? 'SELECT v.*,g.location_name FROM vehicles v LEFT JOIN godowns g ON g.id=v.godown_id ORDER BY v.name' : `SELECT * FROM ${req.params.table} ORDER BY name`)).rows;
+backend/operations.js:115:    if (req.method === 'PUT' && !(await c.query(`SELECT id FROM ${table} WHERE id=$1 FOR UPDATE`,[req.params.id])).rows.length) throw new ApiError('Record not found.',404);
+backend/operations.js:129:    if('vehicle_id' in data){data.vehicle_id=data.vehicle_id||null;if(data.vehicle_id && !(await c.query('SELECT id FROM vehicles WHERE id=$1 AND active=TRUE',[data.vehicle_id])).rows.length)throw new ApiError('Select an active vehicle.');}
+backend/operations.js:134:      if((await c.query(`SELECT 1 FROM work_days WHERE ${column}=$1 AND state<>'CLOSED'`,[id])).rows.length && ('vehicle_id' in data || 'godown_id' in data))throw new ApiError('Close the active work day before changing assignments.',409);
+backend/operations.js:137:    const row=(await c.query(sql,[...vals,id])).rows[0];if(!row)throw new ApiError('Record not found.',404);
+backend/operations.js:139:    if (table === 'salesmen' && data.password_hash) await c.query('DELETE FROM auth_sessions WHERE user_id=$1',[id]);
+backend/operations.js:147:    const result=await c.query('UPDATE salesmen SET password_hash=$1 WHERE id=$2 RETURNING id',[hashPassword(password),req.params.id]);
+backend/operations.js:149:    await c.query('DELETE FROM auth_sessions WHERE user_id=$1',[req.params.id]);
+backend/operations.js:152:  app.get('/api/v2/admin/:location_type(godowns|vehicles)/:id/stock',endpoint(async req=>(await pool.query(`SELECT p.id AS product_id,p.name AS product_name,p.price_paise,p.pieces_per_box,p.strips_per_box,p.units_per_strip,(${sumSQL.replaceAll('type','l.type').replaceAll('quantity_pieces','l.quantity_pieces')})::integer AS quantity_pieces FROM products p LEFT JOIN stock_ledger l ON l.product_id=p.id AND l.location_id=$1 GROUP BY p.id ORDER BY p.name`,[req.params.id])).rows));
+backend/operations.js:153:  app.get('/api/v2/admin/:location_type(godowns|vehicles)/:id/history',endpoint(async req=>(await pool.query('SELECT l.*,p.name AS product_name FROM stock_ledger l JOIN products p ON p.id=l.product_id WHERE l.location_id=$1 ORDER BY l.timestamp DESC LIMIT 200',[req.params.id])).rows));
+backend/operations.js:154:  app.get('/api/v2/admin/audit',endpoint(async ()=> (await pool.query('SELECT * FROM audit_log ORDER BY timestamp DESC LIMIT 200')).rows));
+backend/operations.js:177:    const { rows: stats } = await pool.query(
+backend/operations.js:186:    const { rows: rawInvoices } = await pool.query(
+backend/operations.js:216:      const pData = (await c.query('SELECT strips_per_box, units_per_strip FROM products WHERE id=$1 FOR SHARE', [product_id])).rows[0];
+backend/operations.js:229:  app.get('/api/v2/salesman/snapshot',endpoint(req=>transaction(pool,async c=>{await c.query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY');return snapshot(c,req.user);}))); 
+backend/operations.js:231:    const person=(await c.query('SELECT * FROM salesmen WHERE id=$1 FOR UPDATE',[req.user.id])).rows[0];
+backend/operations.js:232:    const vehicle=(await c.query('SELECT * FROM vehicles WHERE id=$1 AND active=TRUE FOR UPDATE',[person.vehicle_id])).rows[0];
+backend/operations.js:235:    const existing=(await c.query("SELECT * FROM work_days WHERE (salesman_id=$1 OR vehicle_id=$2) AND state<>'CLOSED'",[person.id,vehicle.id])).rows[0];
+backend/operations.js:237:    const previous=(await c.query("SELECT * FROM work_days WHERE vehicle_id=$1 AND state='CLOSED' ORDER BY closed_at DESC LIMIT 1",[vehicle.id])).rows[0];
+backend/operations.js:238:    const products=(await c.query('SELECT * FROM products ORDER BY id')).rows;
+backend/operations.js:242:    await c.query('INSERT INTO work_days(work_day_id,calendar_date,salesman_id,vehicle_id,godown_id,opened_at,metadata) VALUES($1,$2,$3,$4,$5,$6,$7)',[id,dateString(),person.id,vehicle.id,vehicle.godown_id,now,{openingStockSnapshot:opening,pricesSnapshot:prices,heldDays,historicalStockLevels:previous?.metadata?.historicalStockLevels||{}}]);
+backend/operations.js:250:    await c.query("UPDATE work_days SET state=$2::day_state,route_started_at=CASE WHEN $2::day_state='ON_ROUTE' THEN COALESCE(route_started_at,$3) ELSE route_started_at END WHERE work_day_id=$1",[d.work_day_id,target,Date.now()]);return {success:true};
+backend/operations.js:275:    await c.query(
+backend/operations.js:284:    const { rows } = await pool.query(
+backend/operations.js:310:    const { rows } = await pool.query(
+backend/operations.js:336:    const reqRow = (await c.query('SELECT * FROM stock_requests WHERE id=$1 FOR UPDATE', [req.params.id])).rows[0];
+backend/operations.js:341:    const d = (await c.query('SELECT * FROM work_days WHERE work_day_id=$1 FOR UPDATE', [reqRow.work_day_id])).rows[0];
+backend/operations.js:364:    await c.query('UPDATE stock_requests SET status=$1, processed_at=$2 WHERE id=$3', ['APPROVED', now, reqRow.id]);
+backend/operations.js:370:    const reqRow = (await c.query('SELECT * FROM stock_requests WHERE id=$1 FOR UPDATE', [req.params.id])).rows[0];
+backend/operations.js:378:    await c.query('UPDATE stock_requests SET status=$1, processed_at=$2, admin_note=$3 WHERE id=$4', ['REJECTED', now, note, reqRow.id]);
+backend/operations.js:384:    await c.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))',['customer:'+mobile]);
+backend/operations.js:385:    if((await c.query('SELECT id FROM customers WHERE mobile=$1',[mobile])).rows.length)throw new ApiError('A customer with this mobile already exists.',409);
+backend/operations.js:387:    await c.query('INSERT INTO customers(id,name,mobile,shop_name,area,credit_limit_paise) VALUES($1,$2,$3,$4,$5,$6)',[id,text(b.name,'Name'),mobile,b.shopName?text(b.shopName,'Shop'):null,b.area?text(b.area,'Area'):null,b.creditLimitPaise==null?null:integer(b.creditLimitPaise,'Credit limit')]);return {id};
+backend/operations.js:395:    const taxRes = await c.query("SELECT data FROM app_settings WHERE id='tax'");
+backend/operations.js:405:    let customer=null;if(b.customerId && b.customerId!=='walk-in'){customer=(await c.query('SELECT * FROM customers WHERE id=$1 FOR UPDATE',[b.customerId])).rows[0];if(!customer)throw new ApiError('Customer not found.');}
+backend/operations.js:411:    await c.query('INSERT INTO invoices(id,invoice_number,created_at,calendar_date,work_day_id,salesman_id,vehicle_id,outlet_id,customer_id,customer_name,total_amount_paise,payment_mode,payment_ref,previous_balance_paise,new_balance_paise,cgst_percent,sgst_percent,cgst_amount_paise,sgst_amount_paise,subtotal_paise) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)',[id,invoiceNumber,timestamp,d.calendar_date,d.work_day_id,d.salesman_id,d.vehicle_id,customer?.id||null,customer?.id||null,customer?.name||'Walk-in',grand_total,b.paymentMode,b.paymentRef||null,before,after,cgst_percent,sgst_percent,cgst_amount_paise,sgst_amount_paise,total]);
+backend/operations.js:412:    for(const i of items){await c.query('INSERT INTO sale_items(invoice_id,product_id,quantity_pieces,line_total_paise,product_snapshot) VALUES($1,$2,$3,$4,$5)',[id,i.productId,i.quantityPieces,i.lineTotalPaise,productDto(i.product)]);await ledger(c,'SALE',i.productId,i.quantityPieces,d.vehicle_id,id,d.work_day_id);}
+backend/operations.js:413:    await c.query('INSERT INTO accounting_ledger(id,timestamp,type,amount_paise,customer_id,invoice_id,work_day_id) VALUES($1,$2,$3,$4,$5,$6,$7)',[uid(),timestamp,'SALES_'+b.paymentMode,grand_total,customer?.id||null,id,d.work_day_id]);
+backend/operations.js:414:    if(b.paymentMode==='CREDIT')await c.query("INSERT INTO accounting_ledger(id,timestamp,type,amount_paise,customer_id,invoice_id,work_day_id) VALUES($1,$2,'CUSTOMER_RECEIVABLE',$3,$4,$5,$6)",[uid(),timestamp,grand_total,customer.id,id,d.work_day_id]);
+backend/operations.js:415:    if(customer)await c.query('UPDATE customers SET outstanding_balance_paise=$2,last_sold_timestamp=$3 WHERE id=$1',[customer.id,after,timestamp]);
+backend/operations.js:416:    await c.query('UPDATE work_days SET invoice_counter=$2 WHERE work_day_id=$1',[d.work_day_id,counter]);await audit(c,'SALE',id,{workDayId:d.work_day_id,total});return {id,invoiceNumber};
+backend/operations.js:419:    const invoice=(await c.query('SELECT * FROM invoices WHERE id=$1 AND salesman_id=$2',[req.params.id,req.user.id])).rows[0];if(!invoice)throw new ApiError('Invoice not found.',404);
+backend/operations.js:421:    const i=(await c.query('SELECT * FROM invoices WHERE id=$1 FOR UPDATE',[invoice.id])).rows[0];if(i.status==='VOID')return {success:true};
+backend/operations.js:422:    const items=(await c.query('SELECT * FROM sale_items WHERE invoice_id=$1',[i.id])).rows;await lockStock(c,[i.vehicle_id],items.map(x=>x.product_id));
+backend/operations.js:424:    for(const type of ['REVERSAL_'+i.payment_mode,...(i.payment_mode==='CREDIT'?['REVERSAL_RECEIVABLE']:[])])await c.query('INSERT INTO accounting_ledger(id,timestamp,type,amount_paise,customer_id,invoice_id,work_day_id) VALUES($1,$2,$3,$4,$5,$6,$7)',[uid(),Date.now(),type,i.total_amount_paise,i.customer_id,i.id,i.work_day_id]);
+backend/operations.js:425:    if(i.payment_mode==='CREDIT')await c.query('UPDATE customers SET outstanding_balance_paise=outstanding_balance_paise-$2 WHERE id=$1',[i.customer_id,i.total_amount_paise]);
+backend/operations.js:426:    await c.query("UPDATE invoices SET status='VOID' WHERE id=$1",[i.id]);await audit(c,'CANCEL_SALE',i.id);return {success:true};
+backend/operations.js:431:    const products=(await c.query('SELECT * FROM products ORDER BY id')).rows;await lockStock(c,[d.vehicle_id],products.map(p=>p.id));
+backend/operations.js:438:    const bills=(await c.query("SELECT * FROM invoices WHERE work_day_id=$1 AND status='VALID'",[d.work_day_id])).rows;
+backend/operations.js:442:      const movement=(await c.query("SELECT COALESCE(SUM(quantity_pieces),0) AS qty FROM stock_ledger WHERE work_day_id=$1 AND location_id=$2 AND product_id=$3 AND type='LOAD_IN'",[d.work_day_id,d.vehicle_id,p.id])).rows[0];
+backend/operations.js:446:    const itemTotals=(await c.query("SELECT s.product_id,SUM(s.line_total_paise) AS total FROM sale_items s JOIN invoices i ON i.id=s.invoice_id WHERE i.work_day_id=$1 AND i.status='VALID' GROUP BY s.product_id",[d.work_day_id])).rows;
+backend/operations.js:449:    await c.query("UPDATE work_days SET state='UNLOAD_REQUESTED',cash_collected_paise=$2,request_data=$3,requested_at=$4,metadata=metadata||$5::jsonb WHERE work_day_id=$1",[d.work_day_id,cash,data,Date.now(),JSON.stringify({heldItems:held,unloadedItems:unloaded,cashBreakdown:breakdown,cashTotalPaise:cash,noteCount:b.noteCount,coinCount:b.coinCount,dayStockReportSnapshot:Object.fromEntries(rows.map(r=>[r.productId,r]))})]);
+backend/operations.js:452:  app.get('/api/v2/unload-requests',endpoint(async()=> (await pool.query('SELECT * FROM work_days WHERE request_data IS NOT NULL ORDER BY requested_at DESC LIMIT 200')).rows.map(d=>({id:d.work_day_id,status:d.state==='CLOSED'?'APPROVED':d.state==='UNLOAD_REQUESTED'?'PENDING':d.state,requestedAt:number(d.requested_at),request_data:d.request_data}))));
+backend/operations.js:455:    const d=await ownDay(c,req.params.id,req.user,['UNLOAD_REQUESTED']);const note=text(req.body.note,'Correction note');await c.query("UPDATE work_days SET state='SENT_BACK',admin_note=$2 WHERE work_day_id=$1",[d.work_day_id,note]);await audit(c,'UNLOAD_SENT_BACK',d.work_day_id,{note});return {success:true};
+backend/operations.js:460:    const cash=number((await c.query("SELECT COALESCE(SUM(total_amount_paise),0) AS cash FROM invoices WHERE work_day_id=$1 AND status='VALID' AND payment_mode='CASH'",[d.work_day_id])).rows[0].cash);
+backend/operations.js:464:    await c.query("UPDATE work_days SET state='CLOSED',closed_at=$2,admin_note='Job cleared',metadata=metadata||$3::jsonb WHERE work_day_id=$1",[d.work_day_id,Date.now(),JSON.stringify({historicalStockLevels:history})]);await audit(c,'UNLOAD_APPROVED',d.work_day_id);return {success:true};
+backend/operations.js:466:  app.get("/api/v2/settings/tax", endpoint(async req => (await pool.query("SELECT data FROM app_settings WHERE id=$1", ["tax"])).rows[0]?.data || {cgst:0, sgst:0}));
+backend/operations.js:467:  app.get("/api/v2/admin/settings/tax", endpoint(async req => (await pool.query("SELECT data FROM app_settings WHERE id=$1", ["tax"])).rows[0]?.data || {cgst:0, sgst:0}));
+backend/operations.js:470:    await pool.query("UPDATE app_settings SET data=jsonb_build_object('cgst', $1::numeric, 'sgst', $2::numeric) WHERE id=$3", [cgst, sgst, "tax"]);

@@ -1,0 +1,46 @@
+{
+  "admin": [
+    {
+      "path": "index.html",
+      "rawBytes": 625,
+      "gzipLevel9Bytes": 378
+    },
+    {
+      "path": "icons.svg",
+      "rawBytes": 5031,
+      "gzipLevel9Bytes": 2161
+    },
+    {
+      "path": "favicon.svg",
+      "rawBytes": 9522,
+      "gzipLevel9Bytes": 1499
+    },
+    {
+      "path": "assets/index-k-owfDQN.css",
+      "rawBytes": 25074,
+      "gzipLevel9Bytes": 5509
+    },
+    {
+      "path": "assets/index-D-yFpzrz.js",
+      "rawBytes": 363429,
+      "gzipLevel9Bytes": 102789
+    }
+  ],
+  "salesman": [
+    {
+      "path": "index.html",
+      "rawBytes": 632,
+      "gzipLevel9Bytes": 383
+    },
+    {
+      "path": "assets/index-sng4aIOP.css",
+      "rawBytes": 29645,
+      "gzipLevel9Bytes": 5869
+    },
+    {
+      "path": "assets/index-DL-Fp5Y4.js",
+      "rawBytes": 292701,
+      "gzipLevel9Bytes": 81504
+    }
+  ]
+}

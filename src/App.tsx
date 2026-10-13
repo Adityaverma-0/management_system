@@ -23,6 +23,7 @@ import './App.css';
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="p-4">Checking session...</div>;
+  if (user?.role === 'salesman') { window.location.replace('/salesman/'); return <div>Opening dashboard...</div>; }
   if (!user || user.role.toLowerCase() !== 'admin') return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
@@ -90,7 +91,7 @@ function App() {
                   <Route path="/manual-stock" element={<ManualStockPage />} />
                   <Route path="/sales-dashboard" element={<SalesDashboard />} />
                   <Route path="/tax-settings" element={<TaxSettings />} />
-                  <Route path="*" element={<Navigate to="/" replace />} />
+                  <Route path="*" element={<div>Page not found.</div>} />
                 </Routes>
               </AdminLayout>
             </ProtectedRoute>

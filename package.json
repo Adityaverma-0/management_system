@@ -7,11 +7,12 @@
     "dev": "vite",
     "dev:backend": "npm --prefix backend run dev",
     "dev:all": "npm run dev:backend & npm run dev:salesman & npm run dev",
-    "dev:salesman": "npm --prefix salesman-dashboard run dev",
-    "build": "tsc -b && vite build",
+    "dev:salesman": "UNIFIED_APP=1 npm --prefix salesman-dashboard run dev",
+    "build": "tsc -b && vite build && npm run build:salesman",
     "lint": "eslint src tests backend/*.js backend/tests/*.js",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "build:salesman": "UNIFIED_APP=1 npm --prefix salesman-dashboard run build && node scripts/copy-salesman.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",

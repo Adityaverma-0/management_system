@@ -25,15 +25,19 @@ export function installSecurity(app, pool) {
     if (++entry.count > 30) return res.status(429).json({ error: 'Too many sign-in attempts. Try again in ten minutes.' });
     failures.set(key, entry); next();
   };
-  const login = role => async (req, res) => {
+  const login = requestedRole => async (req, res) => {
     try {
       const body = req.body || {};
       let user;
-      if (role === 'admin') {
-        if (!process.env.ADMIN_PASSWORD_HASH) return res.status(503).json({ error: 'Admin credentials are not configured. Run the secure admin setup command.' });
-        if (body.username === (process.env.ADMIN_USERNAME || 'admin') && verifyPassword(body.password, process.env.ADMIN_PASSWORD_HASH)) user = { id: 'admin', username: body.username, role };
-      } else {
-        const { rows } = await pool.query('SELECT * FROM salesmen WHERE phone=$1', [String(body.mobile || '')]);
+      const identifier = String(body.identifier ?? body.username ?? body.mobile ?? '').trim();
+      let role = requestedRole || 'admin';
+      if (requestedRole !== 'salesman') {
+        if (requestedRole === 'admin' && !process.env.ADMIN_PASSWORD_HASH) return res.status(503).json({ error: 'Admin credentials are not configured. Run the secure admin setup command.' });
+        if (identifier === (process.env.ADMIN_USERNAME || 'admin') && verifyPassword(body.password, process.env.ADMIN_PASSWORD_HASH)) user = { id: 'admin', username: identifier, role: 'admin' };
+      }
+      if (!user && requestedRole !== 'admin') {
+        role = 'salesman';
+        const { rows } = await pool.query('SELECT * FROM salesmen WHERE phone=$1', [identifier]);
         if (rows[0]?.active && rows[0].status === 'ACTIVE' && verifyPassword(body.password, rows[0].password_hash)) user = { ...safeUser(rows[0]), role };
       }
       if (!user) return res.status(401).json({ error: 'Invalid credentials or inactive account.' });
@@ -42,6 +46,7 @@ export function installSecurity(app, pool) {
       res.json({ token, user });
     } catch { res.status(503).json({ error: 'Sign-in service unavailable. Please retry.' }); }
   };
+  app.post('/api/v2/login', limiter, login());
   app.post('/api/v2/admin/login', limiter, login('admin'));
   app.post('/api/v2/salesman/login', limiter, login('salesman'));
 

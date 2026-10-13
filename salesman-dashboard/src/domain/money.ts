@@ -16,3 +16,8 @@ export function formatRupees(paise: number): string {
 export function rupeesToPaise(rupees: number): number {
   return Math.round(rupees * 100);
 }
+
+// Preserve decimal historical invoices; new payable amounts are whole rupees.
+export function formatPayable(paise: number): string {
+  return paise % 100 === 0 ? `₹ ${paise / 100}` : formatRupees(paise);
+}

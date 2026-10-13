@@ -44,7 +44,7 @@ export function refreshData(force = false): Promise<void> {
     for (const name of stores) {
       const store = tx.objectStore(name);
       await store.clear();
-      for (const row of data[name]) await store.put(row);
+      await Promise.all(data[name].map((row: any) => store.put(row)));
     }
     await tx.done; setCatalog(data.products);
     if (data.tax) {
@@ -83,7 +83,13 @@ export const seedInitialData = refreshData; // Compatibility only: production ne
 export const updateDayState = (id: string, state: DayState) => mutate(`/salesman/work-days/${id}/state`, {state});
 export const submitLoadStock = (workDayId: string, _warehouseId: string, _vehicleId: string, items: {productId:string;quantityPieces:number}[]) => mutate('/salesman/stock-requests',{workDayId,items});
 export async function saveSaleGenerateInvoice(workDayId: string, sale: Omit<Invoice,'id'|'invoiceNumber'|'status'|'createdAt'|'calendarDate'|'previousBalancePaise'|'newBalancePaise'|'workDayId'|'customerName'>): Promise<string> {
-  return (await mutate('/salesman/sales',{...sale,workDayId})).id;
+  if (refreshing) await refreshing;
+  const body = {...sale,workDayId};
+  const result = await request('/salesman/sales',body,true);
+  // Receipt is fetched directly from the server. Refresh stock/history on the next view.
+  refreshedAt = 0;
+  acknowledge('/salesman/sales',body);
+  return result.id;
 }
 export const cancelInvoice = (id: string) => mutate(`/salesman/invoices/${id}/cancel`,{});
 export const addCustomer = (customer: Customer) => mutate('/salesman/customers',customer);
@@ -95,7 +101,7 @@ export async function getCustomers() { await refreshData(); return (await getDB(
 export async function getLedger() { await refreshData(); return (await getDB()).getAll('ledger'); }
 export async function getLoads() { await refreshData(); return (await getDB()).getAll('loads'); }
 export async function getInvoices() { await refreshData(); return (await getDB()).getAll('invoices'); }
-export async function getInvoice(id: string) { await refreshData(); return (await getDB()).get('invoices',id); }
+export async function getInvoice(id: string): Promise<Invoice> { return request(`/salesman/invoices/${encodeURIComponent(id)}`); }
 export async function getOutlets() { await refreshData(); return (await getDB()).getAll('outlets'); }
 export async function getAccountingEntries() { await refreshData(); return (await getDB()).getAll('accounting'); }
 export async function getAllWorkDays() { await refreshData(); return (await getDB()).getAll('workDays'); }

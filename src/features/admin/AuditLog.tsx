@@ -1,3 +1,4 @@
+import OlderLogs from './OlderLogs';
 import { useCallback, useEffect, useState } from 'react';
 import { useApi } from '../auth/useApi';
 
@@ -57,6 +58,7 @@ export default function AuditLog() {
             ))}
           </tbody>
         </table>
+          <OlderLogs url={`${API_URL}/admin/audit`} rows={logs} onRows={setLogs} />
         {logs.length === 0 && <div className="p-6 text-center text-gray-500">No audit logs found.</div>}
       </div>
     </div>

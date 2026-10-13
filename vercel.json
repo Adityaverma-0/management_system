@@ -1,5 +1,17 @@
 {
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
+    {
+      "source": "/salesman",
+      "destination": "/salesman/index.html"
+    },
+    {
+      "source": "/salesman/:path*",
+      "destination": "/salesman/index.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "installCommand": "npm ci && npm --prefix salesman-dashboard ci"
 }

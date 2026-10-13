@@ -12,7 +12,7 @@ COPY backend/invoice_extraction/requirements.txt ./invoice_extraction/requiremen
 RUN python3 -m venv /opt/invoice-venv \
     && /opt/invoice-venv/bin/pip install --no-cache-dir -r invoice_extraction/requirements.txt
 
-COPY backend/index.js backend/security.js backend/operations.js backend/migrate.js ./
+COPY backend/index.js backend/security.js backend/operations.js backend/billing.js backend/log-pagination.js backend/migrate.js ./
 COPY backend/migrations/ ./migrations/
 COPY backend/invoice_extraction/*.py ./invoice_extraction/
 COPY backend/invoice_extraction/templates/ ./invoice_extraction/templates/
