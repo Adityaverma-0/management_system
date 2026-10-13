@@ -52,7 +52,7 @@ export default function VehicleStock() {
           const isLow = lowStockIds.has(product.id);
 
           return (
-            <div key={product.id} className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <div key={product.id} className="ui-card bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
               <div className="flex justify-between items-start mb-3">
                 <h3 className="font-bold text-lg">{product.name}</h3>
                 <div className="flex items-center space-x-2">
@@ -69,7 +69,7 @@ export default function VehicleStock() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-4 gap-2 text-sm">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
                 <div className="bg-amber-50 dark:bg-amber-900/10 p-2 rounded-lg">
                   <div className="text-amber-700 text-[9px] uppercase font-bold mb-1">Opening</div>
                   <div className="font-medium text-xs">{formatQuantity(opening, product)}</div>

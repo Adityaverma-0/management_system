@@ -33,8 +33,8 @@ export default function AuditLog() {
   return (
     <div>
       <h2 className="text-2xl font-bold mb-4 dark:text-white">Audit Log</h2>
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-        <table className="min-w-full text-left text-sm whitespace-nowrap">
+      <div className="ui-card bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+        <div className="ui-table-scroll"><table className="min-w-full text-left text-sm whitespace-nowrap">
           <thead className="bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
             <tr>
               <th className="px-6 py-3 font-medium">Date & Time</th>
@@ -57,7 +57,7 @@ export default function AuditLog() {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
           <OlderLogs url={`${API_URL}/admin/audit`} rows={logs} onRows={setLogs} />
         {logs.length === 0 && <div className="p-6 text-center text-gray-500">No audit logs found.</div>}
       </div>

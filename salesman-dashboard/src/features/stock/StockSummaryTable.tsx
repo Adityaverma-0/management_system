@@ -149,22 +149,22 @@ const StockSummaryTable = React.memo(({ report, isPending = false, printMode = '
 
   return (
     <div className="w-full text-sm">
-      <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm">
-        <table className="w-full text-left border-collapse">
+      <div className="ui-card overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm">
+        <table className="ui-stock-table w-full text-left border-collapse">
           <thead className="bg-gray-50 dark:bg-gray-800 text-xs uppercase text-gray-500 dark:text-gray-400">
             <tr>
-              <th scope="col" className="p-3 sticky left-0 bg-gray-50 dark:bg-gray-800 z-10 font-bold border-b border-gray-200 dark:border-gray-700 shadow-[1px_0_0_0_#e5e7eb] dark:shadow-[1px_0_0_0_#374151] cursor-pointer" onClick={() => handleSort('name')}>
+              <th scope="col" className="p-3 sticky left-0 bg-gray-50 dark:bg-gray-800 z-10 font-bold border-b border-gray-200 dark:border-gray-700 shadow-[1px_0_0_0_#e5e7eb] dark:shadow-[1px_0_0_0_#374151] cursor-pointer" aria-sort={sortField === 'name' ? (sortAsc ? 'ascending' : 'descending') : 'none'}><button type="button" className="ui-sort" onClick={() => handleSort('name')}>
                 ITEM <SortIcon field="name" />
-              </th>
+              </button></th>
               <th scope="col" className="p-3 border-b border-gray-200 dark:border-gray-700">
                 TOTAL STOCK AT START
               </th>
-              <th scope="col" className="p-3 border-b border-gray-200 dark:border-gray-700 cursor-pointer" onClick={() => handleSort('soldAmount')}>
+              <th scope="col" className="p-3 border-b border-gray-200 dark:border-gray-700 cursor-pointer" aria-sort={sortField === 'soldAmount' ? (sortAsc ? 'ascending' : 'descending') : 'none'}><button type="button" className="ui-sort" onClick={() => handleSort('soldAmount')}>
                 SOLD <SortIcon field="soldAmount" />
-              </th>
-              <th scope="col" className="p-3 border-b border-gray-200 dark:border-gray-700 cursor-pointer text-right" onClick={() => handleSort('remainingAmount')}>
+              </button></th>
+              <th scope="col" className="p-3 border-b border-gray-200 dark:border-gray-700 cursor-pointer text-right" aria-sort={sortField === 'remainingAmount' ? (sortAsc ? 'ascending' : 'descending') : 'none'}><button type="button" className="ui-sort" onClick={() => handleSort('remainingAmount')}>
                 REMAINING <SortIcon field="remainingAmount" />
-              </th>
+              </button></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -217,7 +217,7 @@ const StockSummaryTable = React.memo(({ report, isPending = false, printMode = '
           </tfoot>
         </table>
       </div>
-      <div className="mt-2 flex justify-between items-center text-xs text-gray-500">
+      <div className="mt-2 flex flex-wrap gap-2 justify-between items-center text-xs text-gray-500">
         <div>Products: {sorted.length} · Items Sold: {formatQuantity(totalItemsSold, defaultProduct).replace(/[a-zA-Z]/g, '').trim()}</div>
         <button onClick={() => setShowAll(!showAll)} className="text-blue-600 dark:text-blue-400 font-medium hover:underline">
           {showAll ? 'Hide zero-activity products' : 'Show all products'}

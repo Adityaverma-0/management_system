@@ -95,9 +95,9 @@ export default function ManualStockPage() {
   return (
     <div className="space-y-6 dark:text-gray-100">
       <h2 className="text-2xl font-bold">Manual Stock Management</h2>
-      <div className="bg-white dark:bg-gray-800 p-4 rounded shadow">
-        <label className="block text-sm mb-2">Select Warehouse</label>
-        <select value={selectedGodown} onChange={e => setSelectedGodown(e.target.value)} className="w-full p-2 border rounded bg-transparent">
+      <div className="ui-card bg-white dark:bg-gray-800 p-4 rounded shadow">
+        <label htmlFor="ui-field-1" className="block text-sm mb-2">Select Warehouse</label>
+        <select id="ui-field-1" value={selectedGodown} onChange={e => setSelectedGodown(e.target.value)} className="w-full p-2 border rounded bg-transparent">
           <option value="">-- Select --</option>
           {godowns.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
         </select>
@@ -105,47 +105,47 @@ export default function ManualStockPage() {
 
       {selectedGodown && (
         <div className="grid md:grid-cols-2 gap-6">
-          <div className="bg-white dark:bg-gray-800 p-4 rounded shadow">
+          <div className="ui-card bg-white dark:bg-gray-800 p-4 rounded shadow">
             <h3 className="font-bold mb-4">Add Manual Stock</h3>
             <div className="space-y-3">
-              <input 
+              <input aria-label="Search Product..."
                 type="text" 
                 placeholder="Search Product..." 
                 value={searchTerm} 
                 onChange={e => setSearchTerm(e.target.value)} 
                 className="w-full p-2 border rounded bg-transparent" 
               />
-              <select value={productId} onChange={e => { setProductId(e.target.value); setUnit('PIECE'); }} className="w-full p-2 border rounded bg-transparent">
+              <label className="ui-field flex-1"><span>Product</span><select aria-label="Product" value={productId} onChange={e => { setProductId(e.target.value); setUnit('PIECE'); }} className="w-full p-2 border rounded bg-transparent">
                 <option value="">{searchTerm ? (filteredProducts.length > 0 ? `Select from ${filteredProducts.length} matches...` : 'No matches found') : 'Select Product...'}</option>
                 {filteredProducts.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
+              </select></label>
               
               <div className="flex gap-2">
-                <input type="number" placeholder="Quantity" value={quantity} onChange={e => setQuantity(e.target.value)} className="w-full p-2 border rounded bg-transparent" />
-                <select value={unit} onChange={e => setUnit(e.target.value)} className="p-2 border rounded bg-transparent w-32">
+                <label className="ui-field flex-1"><span>Quantity</span><input aria-label="Quantity" type="number" placeholder="Quantity" value={quantity} onChange={e => setQuantity(e.target.value)} className="w-full p-2 border rounded bg-transparent" /></label>
+                <label className="ui-field flex-1"><span>Pieces</span><select aria-label="Pieces" value={unit} onChange={e => setUnit(e.target.value)} className="p-2 border rounded bg-transparent w-32">
                   <option value="PIECE">Pieces</option>
                   <option value="STRIP" disabled={!selectedProduct || !selectedProduct.units_per_strip}>Strips</option>
                   <option value="BOX" disabled={!selectedProduct || !selectedProduct.pieces_per_box}>Boxes</option>
-                </select>
+                </select></label>
               </div>
               {calculatedPieces > 0 && <p className="text-sm text-gray-500">Preview: {calculatedPieces} total pieces.</p>}
 
-              <select value={reason} onChange={e => setReason(e.target.value)} className="w-full p-2 border rounded bg-transparent">
+              <label className="ui-field flex-1"><span>Opening Stock</span><select aria-label="Opening Stock" value={reason} onChange={e => setReason(e.target.value)} className="w-full p-2 border rounded bg-transparent">
                 <option value="OPENING_STOCK">Opening Stock</option>
                 <option value="OTHER">Other</option>
-              </select>
-              <input placeholder="Note" value={note} onChange={e => setNote(e.target.value)} className="w-full p-2 border rounded bg-transparent" />
+              </select></label>
+              <label className="ui-field flex-1"><span>Note</span><input aria-label="Note" placeholder="Note" value={note} onChange={e => setNote(e.target.value)} className="w-full p-2 border rounded bg-transparent" /></label>
               <button disabled={isSubmitting || calculatedPieces <= 0} onClick={handleSubmit} className="w-full bg-blue-600 text-white p-2 rounded">Add Stock</button>
               {message && <p className="text-sm p-2">{message}</p>}
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 p-4 rounded shadow">
+          <div className="ui-card bg-white dark:bg-gray-800 p-4 rounded shadow">
             <h3 className="font-bold mb-4">Current Stock</h3>
-            <table className="w-full text-sm">
+            <div className="ui-table-scroll"><table className="w-full text-sm">
               <thead className="text-left dark:text-gray-400"><tr><th>Product</th><th>Qty</th></tr></thead>
               <tbody>{stock.map(s => <tr key={s.product_id}><td>{s.product_name}</td><td>{s.quantity_pieces}</td></tr>)}</tbody>
-            </table>
+            </table></div>
           </div>
         </div>
       )}

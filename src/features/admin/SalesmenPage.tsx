@@ -74,43 +74,43 @@ export default function SalesmenPage() {
   return (
     <div className="space-y-4 dark:text-gray-100">
       <h2 className="text-2xl font-bold">Salesmen</h2>
-      {error && <p className="text-red-600">{error}</p>}
+      {error && <p role="alert" className="text-red-600">{error}</p>}
       {warning && <p className="text-amber-600 text-sm">{warning}</p>}
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 space-y-3">
+      <div className="ui-card bg-white dark:bg-gray-800 rounded-lg shadow p-4 space-y-3">
         <h3 className="font-bold">Add / edit salesman</h3>
         <div className="flex flex-wrap gap-2">
-          <input className="border dark:border-gray-600 bg-transparent rounded p-2" placeholder="Name" value={name} onChange={e => setName(e.target.value)} />
-          <input className="border dark:border-gray-600 bg-transparent rounded p-2" placeholder="Mobile (10 digits)" value={mobile} onChange={e => setMobile(e.target.value)} />
-          <select className="border dark:border-gray-600 bg-transparent rounded p-2" value={location} onChange={e => { setLocation(e.target.value); setVehicleId(''); }}>
+          <label className="ui-field flex-1"><span>Name</span><input aria-label="Name" className="border dark:border-gray-600 bg-transparent rounded p-2" placeholder="Name" value={name} onChange={e => setName(e.target.value)} /></label>
+          <label className="ui-field flex-1"><span>Mobile (10 digits)</span><input aria-label="Mobile (10 digits)" className="border dark:border-gray-600 bg-transparent rounded p-2" placeholder="Mobile (10 digits)" value={mobile} onChange={e => setMobile(e.target.value)} /></label>
+          <label className="ui-field flex-1"><span>Location</span><select aria-label="Location" className="border dark:border-gray-600 bg-transparent rounded p-2" value={location} onChange={e => { setLocation(e.target.value); setVehicleId(''); }}>
             <option value="">Location</option>{locations.map(l => <option key={l}>{l}</option>)}
-          </select>
-          <select className="border dark:border-gray-600 bg-transparent rounded p-2" value={vehicleId} onChange={e => setVehicleId(e.target.value)}>
+          </select></label>
+          <label className="ui-field flex-1"><span>Vehicle (optional)</span><select aria-label="Vehicle (optional)" className="border dark:border-gray-600 bg-transparent rounded p-2" value={vehicleId} onChange={e => setVehicleId(e.target.value)}>
             <option value="">Vehicle (optional)</option>{vehiclesForLocation.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
-          </select>
-          <input type="password" className="border dark:border-gray-600 bg-transparent rounded p-2" placeholder={editId ? 'New Password (optional)' : 'Password'} value={password} onChange={e => setPassword(e.target.value)} />
-          <select className="border dark:border-gray-600 bg-transparent rounded p-2" value={status} onChange={e => setStatus(e.target.value)}>
+          </select></label>
+          <label className="ui-field flex-1"><span>Password</span><input aria-label="Password" type="password" className="border dark:border-gray-600 bg-transparent rounded p-2" placeholder={editId ? 'New Password (optional)' : 'Password'} value={password} onChange={e => setPassword(e.target.value)} /></label>
+          <label className="ui-field flex-1"><span>Status</span><select aria-label="ACTIVE" className="border dark:border-gray-600 bg-transparent rounded p-2" value={status} onChange={e => setStatus(e.target.value)}>
             <option>ACTIVE</option><option>ON_HOLD</option><option>INACTIVE</option>
-          </select>
+          </select></label>
           <button disabled={busy} onClick={save} className="bg-blue-600 text-white rounded px-4 py-2">{editId ? 'Update' : 'Add'}</button>
           {editId && <button onClick={() => { setEditId(''); setName(''); setMobile(''); setLocation(''); setVehicleId(''); setStatus('ACTIVE'); setPassword(''); }} className="border rounded px-4 py-2">Cancel</button>}
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 space-y-3">
+      <div className="ui-card bg-white dark:bg-gray-800 rounded-lg shadow p-4 space-y-3">
         <h3 className="font-bold">Set / reset password</h3>
         <div className="flex flex-wrap gap-2">
-          <select className="border dark:border-gray-600 bg-transparent rounded p-2" value={pinTarget} onChange={e => setPinTarget(e.target.value)}>
+          <label className="ui-field flex-1"><span>Salesman</span><select aria-label="Select salesman" className="border dark:border-gray-600 bg-transparent rounded p-2" value={pinTarget} onChange={e => setPinTarget(e.target.value)}>
             <option value="">Select salesman</option>{salesmen.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
-          <input className="border dark:border-gray-600 bg-transparent rounded p-2" placeholder="New password (8+ characters)" value={pin} onChange={e => setPin(e.target.value)} />
+          </select></label>
+          <label className="ui-field flex-1"><span>New password (8+ characters)</span><input aria-label="New password (8+ characters)" className="border dark:border-gray-600 bg-transparent rounded p-2" placeholder="New password (8+ characters)" value={pin} onChange={e => setPin(e.target.value)} /></label>
           <button onClick={applyPin} className="bg-blue-600 text-white rounded px-4 py-2">Set password</button>
         </div>
         <p className="text-xs text-gray-500">The PIN is scrypt-hashed on the server and is never returned by any API, stored in the audit log, or displayed again.</p>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-        <table className="min-w-full text-sm">
+      <div className="ui-card bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+        <div className="ui-table-scroll"><table className="min-w-full text-sm">
           <thead className="text-left text-gray-500"><tr><th className="p-2">Name</th><th className="p-2">Mobile</th><th className="p-2">Location</th><th className="p-2">Vehicle</th><th className="p-2">Status</th><th className="p-2"></th></tr></thead>
           <tbody>{salesmen.map(s => (
             <tr key={s.id} className="border-t dark:border-gray-700">
@@ -125,7 +125,7 @@ export default function SalesmenPage() {
               </td>
             </tr>
           ))}</tbody>
-        </table>
+        </table></div>
       </div>
     </div>
   );

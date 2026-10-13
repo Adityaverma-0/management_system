@@ -70,19 +70,19 @@ export default function VehiclesPage() {
   return (
     <div className="space-y-4 dark:text-gray-100">
       <h2 className="text-2xl font-bold">Vehicles</h2>
-      {error && <p className="text-red-600">{error}</p>}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 space-y-3">
+      {error && <p role="alert" className="text-red-600">{error}</p>}
+      <div className="ui-card bg-white dark:bg-gray-800 rounded-lg shadow p-4 space-y-3">
         <h3 className="font-bold">Add / edit vehicle</h3>
         <div className="flex flex-wrap gap-2">
-          <input className="border dark:border-gray-600 bg-transparent rounded p-2" placeholder="Vehicle name" value={name} onChange={e => setName(e.target.value)} />
-          <select className="border dark:border-gray-600 bg-transparent rounded p-2" value={godownId} onChange={e => setGodownId(e.target.value)}>
+          <label className="ui-field flex-1"><span>Vehicle name</span><input aria-label="Vehicle name" className="border dark:border-gray-600 bg-transparent rounded p-2" placeholder="Vehicle name" value={name} onChange={e => setName(e.target.value)} /></label>
+          <label className="ui-field flex-1"><span>Godown</span><select aria-label="Select godown (location comes from godown)" className="border dark:border-gray-600 bg-transparent rounded p-2" value={godownId} onChange={e => setGodownId(e.target.value)}>
             <option value="">Select godown (location comes from godown)</option>
             {godowns.map(g => <option key={g.id} value={g.id}>{g.name} — {g.location_name}</option>)}
-          </select>
+          </select></label>
           <button disabled={busy} onClick={save} className="bg-blue-600 text-white rounded px-4 py-2">{editId ? 'Update' : 'Add'}</button>
           {editId && <button onClick={() => { setEditId(''); setName(''); setGodownId(''); }} className="border rounded px-4 py-2">Cancel</button>}
         </div>
-        <table className="min-w-full text-sm">
+        <div className="ui-table-scroll"><table className="min-w-full text-sm">
           <thead className="text-left text-gray-500"><tr><th className="p-2">Name</th><th className="p-2">Location</th><th className="p-2">Godown</th><th className="p-2"></th></tr></thead>
           <tbody>{vehicles.map(v => (
             <tr key={v.id} className="border-t dark:border-gray-700">
@@ -92,15 +92,15 @@ export default function VehiclesPage() {
               <td className="p-2 text-right"><button className="text-blue-600" onClick={() => { setEditId(v.id); setName(v.name); setGodownId(v.godown_id); }}>Edit</button></td>
             </tr>
           ))}</tbody>
-        </table>
+        </table></div>
       </div>
 
       {selectedVehicle && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 space-y-3">
+        <div className="ui-card bg-white dark:bg-gray-800 rounded-lg shadow p-4 space-y-3">
           <h3 className="font-bold">{selectedVehicle.name} — {selectedVehicle.location_name}</h3>
           <p className="text-sm text-gray-500">Assigned salesman: {assignedSalesman ? assignedSalesman.name : '— none —'}</p>
           <h4 className="font-semibold">Current stock</h4>
-          <table className="min-w-full text-sm">
+          <div className="ui-table-scroll"><table className="min-w-full text-sm">
             <thead className="text-left text-gray-500"><tr><th className="p-2">Product</th><th className="p-2">Quantity</th><th className="p-2">Value</th></tr></thead>
             <tbody>{stock.map(row => (
               <tr key={row.product_id} className="border-t dark:border-gray-700">
@@ -109,9 +109,9 @@ export default function VehiclesPage() {
                 <td className="p-2">{formatRupees(row.quantity_pieces * (row.price_paise ?? 0))}</td>
               </tr>
             ))}</tbody>
-          </table>
+          </table></div>
           <h4 className="font-semibold">Movement history</h4>
-          <table className="min-w-full text-sm">
+          <div className="ui-table-scroll"><table className="min-w-full text-sm">
             <thead className="text-left text-gray-500"><tr><th className="p-2">When</th><th className="p-2">Type</th><th className="p-2">Product</th><th className="p-2">Qty</th><th className="p-2">Reason</th></tr></thead>
             <tbody>{history.map(r => (
               <tr key={r.id} className="border-t dark:border-gray-700">
@@ -122,7 +122,7 @@ export default function VehiclesPage() {
                 <td className="p-2">{r.reason || '-'}</td>
               </tr>
             ))}</tbody>
-          </table>
+          </table></div>
           <OlderLogs url={`${API_URL}/admin/vehicles/${selected}/history`} rows={history} onRows={setHistory} />
         </div>
       )}

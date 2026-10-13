@@ -41,7 +41,7 @@ function BottomNav() {
   if (location.pathname.startsWith('/print')) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 pb-safe print:hidden z-50">
+    <nav aria-label="Main navigation" className="ui-bottom-nav fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 pb-safe print:hidden z-50">
       <div className="flex justify-around items-center h-16">
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -49,6 +49,7 @@ function BottomNav() {
           return (
             <button
               key={tab.name}
+              aria-current={isActive ? 'page' : undefined}
               onClick={() => navigate(tab.path)}
               className={clsx(
                 "flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors",
@@ -56,12 +57,12 @@ function BottomNav() {
               )}
             >
               <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
-              <span className="text-[10px] font-bold">{tab.name}</span>
+              <span className="text-xs font-semibold">{tab.name}</span>
             </button>
           );
         })}
       </div>
-    </div>
+    </nav>
   );
 }
 
@@ -70,9 +71,9 @@ function Layout({ children, onLogout }: { children: React.ReactNode, onLogout: (
   const isPrint = location.pathname.startsWith('/print');
 
   return (
-    <div className={`min-h-screen bg-gray-50 dark:bg-gray-950 ${!isPrint ? 'pb-16' : ''}`}>
+    <div className={`ui-shell min-h-screen bg-gray-50 dark:bg-gray-950 ${!isPrint ? 'ui-sales-shell' : ''}`}>
       {!isPrint && !location.pathname.startsWith('/sell') && (
-        <header className="bg-white dark:bg-gray-900 shadow-sm px-4 py-3 flex justify-between items-center sticky top-0 z-40 print:hidden">
+        <header className="ui-header bg-white dark:bg-gray-900 shadow-sm px-4 py-3 flex justify-between items-center print:hidden">
           <h1 className="text-lg font-bold">Salesman Dashboard</h1>
           <div className="flex items-center space-x-2">
             <span className="flex h-3 w-3 relative">

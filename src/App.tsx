@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, NavLink } from 'react-router-dom';
 import { AuthProvider, useAuth } from './features/auth/AuthContext';
 import { CheckCircle, Warehouse, Truck, Package, Users, FileUp, Database , TrendingUp} from 'lucide-react';
@@ -29,7 +29,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 const navClass = ({ isActive }: { isActive: boolean }) => 
-  `flex items-center gap-3 px-4 py-2 rounded ${
+  `ui-nav-link flex items-center gap-3 px-4 py-2 rounded ${
     isActive 
       ? "bg-blue-50 text-blue-700 dark:bg-blue-900/50 dark:text-blue-200 font-medium" 
       : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -37,18 +37,20 @@ const navClass = ({ isActive }: { isActive: boolean }) =>
 
 function AdminLayout({ children }: { children: React.ReactNode }) {
   const { logout, user } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col">
-      <header className="bg-white dark:bg-gray-800 shadow px-4 py-4 md:px-8 md:py-6 flex justify-between items-center">
+    <div className="ui-shell min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col">
+      <header className="ui-header bg-white dark:bg-gray-800 shadow px-4 py-4 md:px-8 md:py-6 flex justify-between items-center">
         <h1 className="text-xl font-bold dark:text-white">Admin Panel</h1>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-3">
           <span className="text-sm dark:text-gray-300">Welcome, {user?.username}</span>
           <button onClick={logout} className="text-sm bg-red-100 text-red-600 px-3 py-1 rounded hover:bg-red-200">Logout</button>
         </div>
       </header>
       <div className="flex flex-col md:flex-row flex-1">
         <aside className="w-full md:w-64 md:shrink-0 bg-white dark:bg-gray-800 shadow-sm border-r dark:border-gray-700">
-          <nav className="p-4 flex flex-wrap md:block md:space-y-2">
+          <button type="button" className="m-3 px-4 py-2 rounded-lg border md:hidden" aria-expanded={menuOpen} aria-controls="admin-navigation" onClick={() => setMenuOpen(!menuOpen)}>Navigation {menuOpen ? '−' : '+'}</button>
+          <nav id="admin-navigation" aria-label="Admin navigation" onKeyDown={event => { if (menuOpen && event.key === 'Escape') { setMenuOpen(false); event.currentTarget.previousElementSibling instanceof HTMLElement && event.currentTarget.previousElementSibling.focus(); } }} onClick={event => { if ((event.target as HTMLElement).closest('a')) setMenuOpen(false); }} className={`${menuOpen ? 'grid' : 'hidden'} p-3 gap-1 md:block md:space-y-2`}>
             <NavLink to="/" className={navClass}><CheckCircle size={18} /> Unload Approvals</NavLink>
             <NavLink to="/stock-approvals" className={navClass}><Package size={18} /> Stock Approvals</NavLink>
             <NavLink to="/godowns" className={navClass}><Warehouse size={18} /> Godowns</NavLink>

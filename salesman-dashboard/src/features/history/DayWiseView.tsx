@@ -90,19 +90,19 @@ export default function DayWiseView({ invoices, workDays }: { invoices: Invoice[
               else statusBadge = 'Open';
 
               return (
-                <div key={d.date} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
-                  <div onClick={() => toggle(d.date)} className="p-4 flex justify-between items-center cursor-pointer active:bg-gray-50 dark:active:bg-gray-900 transition-colors">
+                <div key={d.date} className="ui-card bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+                  <div role="button" tabIndex={0} onKeyDown={event => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); event.currentTarget.click(); } }} aria-expanded={isExpanded} onClick={() => toggle(d.date)} className="p-4 flex flex-wrap gap-3 justify-between items-center cursor-pointer active:bg-gray-50 dark:active:bg-gray-900 transition-colors">
                     <div>
-                      <h4 className="font-bold flex items-center">
+                      <h4 className="font-bold flex flex-wrap gap-2 items-center">
                         {new Date(d.date).toLocaleDateString('en-US', { weekday: 'long', day: '2-digit', month: 'short' })}
-                        <span className={`ml-2 text-[10px] px-1.5 py-0.5 rounded font-bold ${statusBadge === 'Closed' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                        <span className={`shrink-0 whitespace-nowrap text-xs px-1.5 py-0.5 rounded font-bold ${statusBadge === 'Closed' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
                           {statusBadge}
                         </span>
                       </h4>
                       <p className="text-xs font-bold text-gray-500 mt-1">{d.billsCount} Bills {d.days.length > 1 ? ` • ${d.days.length} shifts` : ''}</p>
                     </div>
                     <div className="text-right flex items-center">
-                      <p className="font-bold text-blue-600 mr-2">{formatRupees(d.totalSales)}</p>
+                      <p className="font-bold text-blue-600 mr-2 whitespace-nowrap">{formatRupees(d.totalSales)}</p>
                       {isExpanded ? <ChevronUp size={20} className="text-gray-400" /> : <ChevronDown size={20} className="text-gray-400" />}
                     </div>
                   </div>

@@ -173,14 +173,14 @@ const updateCart = (productId: string, field: 'boxes'|'strips'|'pieces', delta: 
     return (
       <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-950 pb-40">
         <div className="bg-white dark:bg-gray-900 shadow-sm px-4 py-3 flex items-center sticky top-0 z-40">
-          <button onClick={() => setStep('ITEMS')} className="p-2 -ml-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800">
+          <button aria-label="Go back" onClick={() => setStep('ITEMS')} className="p-2 -ml-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800">
             <ArrowLeft size={24} />
           </button>
           <h2 className="text-xl font-bold ml-2">Payment</h2>
         </div>
 
         <div className="p-4 space-y-6">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 text-center">
+          <div className="ui-card bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 text-center">
             {(tax.cgst > 0 || tax.sgst > 0) ? (
               <div className="mb-3 text-sm text-gray-500 space-y-1 border-b border-gray-100 dark:border-gray-700 pb-3">
                 <div className="flex justify-between">
@@ -242,7 +242,7 @@ const updateCart = (productId: string, field: 'boxes'|'strips'|'pieces', delta: 
 
             {paymentMode === 'UPI' && (
               <div className="px-4 py-2 animate-in slide-in-from-top-2">
-                <input 
+                <input aria-label="UPI Reference (Optional)"
                   type="text" placeholder="UPI Reference (Optional)" value={paymentRef} onChange={e => setPaymentRef(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900"
                 />
@@ -270,10 +270,10 @@ const updateCart = (productId: string, field: 'boxes'|'strips'|'pieces', delta: 
           </div>
         </div>
 
-        <div className="fixed left-0 right-0 p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 z-40" style={{ bottom: "calc(4rem + env(safe-area-inset-bottom, 0px))" }}>
+        <div className="ui-actions p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 z-40">
           <button
             disabled={busy} onClick={handleSaveBill}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl text-lg flex items-center justify-center space-x-2 active:scale-95 transition-transform"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl text-lg flex items-center justify-center space-x-2 active:opacity-90 transition-transform"
           >
             <span>Save & Print Bill</span>
           </button>
@@ -284,9 +284,9 @@ const updateCart = (productId: string, field: 'boxes'|'strips'|'pieces', delta: 
 
   // ITEMS STEP
   return (
-    <div className="flex flex-col h-[calc(100vh-64px)] pb-16 bg-gray-50 dark:bg-gray-950">
+    <div className="flex flex-col ui-workflow bg-gray-50 dark:bg-gray-950">
       <div className="bg-white dark:bg-gray-900 shadow-sm px-4 py-3 flex items-center sticky top-0 z-40">
-        <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800">
+        <button aria-label="Go back" onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800">
           <ArrowLeft size={24} />
         </button>
         <div className="ml-2">
@@ -300,7 +300,7 @@ const updateCart = (productId: string, field: 'boxes'|'strips'|'pieces', delta: 
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Search size={20} className="text-gray-400" />
           </div>
-          <input
+          <input aria-label="Search products..."
             type="text" placeholder="Search products..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-lg"
           />
@@ -318,7 +318,7 @@ const updateCart = (productId: string, field: 'boxes'|'strips'|'pieces', delta: 
             const remaining = calculateRemainingStock(ledger, product.id, summary.vehicleId);
             
             return (
-              <div key={product.id} className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+              <div key={product.id} className="ui-card bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
                 <div className="flex justify-between items-start mb-3">
                   <div>
                     <h3 className="font-bold text-lg">{product.name}</h3>
@@ -329,14 +329,14 @@ const updateCart = (productId: string, field: 'boxes'|'strips'|'pieces', delta: 
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2">
+                <div className="ui-quantity-grid grid grid-cols-3 gap-2">
                   {(['boxes', 'strips', 'pieces'] as const).map(field => (
                     <div key={field} className="flex flex-col items-center p-2 bg-gray-50 dark:bg-gray-900 rounded-lg">
                       <span className="text-xs text-gray-500 uppercase font-bold mb-2">{field}</span>
-                      <div className="flex items-center space-x-3">
-                        <button aria-label={`Decrease ${field} for ${product.name}`} onClick={() => updateCart(product.id, field, -1)} className="w-8 h-8 rounded-full bg-white dark:bg-gray-800 shadow flex items-center justify-center active:scale-95"><Minus size={16} /></button>
+                      <div className="ui-stepper flex items-center space-x-3">
+                        <button aria-label={`Decrease ${field} for ${product.name}`} onClick={() => updateCart(product.id, field, -1)} className="w-8 h-8 rounded-full bg-white dark:bg-gray-800 shadow flex items-center justify-center active:opacity-90"><Minus size={16} /></button>
                         <span className="font-bold text-lg w-4 text-center">{qty[field]}</span>
-                        <button aria-label={`Increase ${field} for ${product.name}`} onClick={() => updateCart(product.id, field, 1)} className="w-8 h-8 rounded-full bg-white dark:bg-gray-800 shadow flex items-center justify-center active:scale-95 text-blue-600"><Plus size={16} /></button>
+                        <button aria-label={`Increase ${field} for ${product.name}`} onClick={() => updateCart(product.id, field, 1)} className="w-8 h-8 rounded-full bg-white dark:bg-gray-800 shadow flex items-center justify-center active:opacity-90 text-blue-600"><Plus size={16} /></button>
                       </div>
                     </div>
                   ))}
@@ -348,7 +348,7 @@ const updateCart = (productId: string, field: 'boxes'|'strips'|'pieces', delta: 
       </div>
 
       {subtotalPaise > 0 && (
-        <div className="fixed bottom-16 left-0 right-0 p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 z-50">
+        <div className="ui-actions   p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 ">
           {(tax.cgst > 0 || tax.sgst > 0) && (
             <div className="mb-2 text-xs text-gray-500 space-y-1">
               <div className="flex justify-between">
@@ -375,7 +375,7 @@ const updateCart = (productId: string, field: 'boxes'|'strips'|'pieces', delta: 
           </div>
           <button
             onClick={handleGoToPayment}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl text-lg flex items-center justify-center space-x-2 active:scale-95 transition-transform"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl text-lg flex items-center justify-center space-x-2 active:opacity-90 transition-transform"
           >
             <ShoppingCart size={20} />
             <span>Proceed to Payment</span>

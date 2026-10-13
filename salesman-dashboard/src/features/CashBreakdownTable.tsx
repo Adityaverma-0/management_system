@@ -16,7 +16,7 @@ export default function CashBreakdownTable({ breakdown, totalPaise, noteCount, c
 
   return (
     <div className="w-full text-sm">
-      <table className="w-full text-left border-collapse">
+      <div className="ui-table-scroll"><table className="w-full text-left border-collapse">
         <thead className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 uppercase text-xs">
           <tr>
             <th className="p-2 border-b border-gray-200 dark:border-gray-700">Denomination</th>
@@ -47,7 +47,7 @@ export default function CashBreakdownTable({ breakdown, totalPaise, noteCount, c
             <td className="p-2 text-right">{formatRupees(totalPaise)}</td>
           </tr>
         </tfoot>
-      </table>
+      </table></div>
     </div>
   );
 }

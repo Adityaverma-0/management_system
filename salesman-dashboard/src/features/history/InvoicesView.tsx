@@ -11,7 +11,7 @@ export default function InvoicesView({ invoices }: { invoices: Invoice[] }) {
       {invoices.slice().reverse().map(invoice => {
         const isActive = invoice.status === 'VALID';
         return (
-          <div 
+          <div role="button" tabIndex={0} onKeyDown={event => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); event.currentTarget.click(); } }}
             key={invoice.id} 
             onClick={() => navigate(`/print/${invoice.id}`)}
             className={`p-4 rounded-xl shadow-sm border cursor-pointer active:scale-95 transition-transform ${isActive ? 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700' : 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 opacity-70'}`}

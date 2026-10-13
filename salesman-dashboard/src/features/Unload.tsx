@@ -165,16 +165,16 @@ export default function Unload() {
   const isSubmitDisabled = REQUIRE_DENOMINATIONS && accounts.cash > 0 && cashTotalPaise === 0;
 
   return (
-    <div className="flex flex-col min-h-screen pb-40">
+    <div className="flex flex-col ui-workflow">
       <div className="flex items-center space-x-4 mb-4">
-        <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800">
+        <button aria-label="Go back" onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800">
           <ArrowLeft size={24} />
         </button>
         <h2 className="text-xl font-bold">End Day Unload</h2>
       </div>
 
       <div className="space-y-6">
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="ui-card bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
           <h3 className="text-lg font-bold mb-4">Payment Breakdown</h3>
           <div className="grid grid-cols-2 gap-3 mb-4">
             <div className="bg-blue-50 dark:bg-blue-900/10 p-3 rounded-lg border border-blue-100 dark:border-blue-900/30">
@@ -222,7 +222,7 @@ export default function Unload() {
         </div>
 
         {/* Stock Section */}
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="ui-card bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-bold">Count & Hold Stock</h3>
           </div>
@@ -267,14 +267,14 @@ export default function Unload() {
                     {/* Counted Row */}
                     <div>
                       <div className="text-xs font-bold text-gray-500 mb-2 uppercase">Counted Remaining</div>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="ui-quantity-grid grid grid-cols-3 gap-2">
                         {(['boxes', 'strips', 'pieces'] as const).map(field => (
                           <div key={field} className="flex flex-col items-center p-1 bg-gray-50 dark:bg-gray-900 rounded">
                             <span className="text-[10px] text-gray-400 uppercase font-bold mb-1">{field}</span>
-                            <div className="flex items-center space-x-2">
-                              <button onClick={() => updateCount(product.id, field, -1)} className="w-8 h-8 flex justify-center items-center bg-white dark:bg-gray-800 rounded shadow"><Minus size={14}/></button>
+                            <div className="ui-stepper flex items-center space-x-2">
+                              <button aria-label={`Decrease counted ${field} for ${product.name}`} onClick={() => updateCount(product.id, field, -1)} className="w-8 h-8 flex justify-center items-center bg-white dark:bg-gray-800 rounded shadow"><Minus size={14}/></button>
                               <span className="font-bold text-sm w-4 text-center">{qty[field]}</span>
-                              <button onClick={() => updateCount(product.id, field, 1)} className="w-8 h-8 flex justify-center items-center bg-white dark:bg-gray-800 rounded shadow"><Plus size={14}/></button>
+                              <button aria-label={`Increase counted ${field} for ${product.name}`} onClick={() => updateCount(product.id, field, 1)} className="w-8 h-8 flex justify-center items-center bg-white dark:bg-gray-800 rounded shadow"><Plus size={14}/></button>
                             </div>
                           </div>
                         ))}
@@ -291,14 +291,14 @@ export default function Unload() {
                           Unload: {formatQuantity(unloadPieces, product)}
                         </div>
                       </div>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="ui-quantity-grid grid grid-cols-3 gap-2">
                         {(['boxes', 'strips', 'pieces'] as const).map(field => (
-                          <div key={field} className="flex flex-col items-center p-1 bg-white dark:bg-gray-900 rounded">
+                          <div key={field} className="ui-card flex flex-col items-center p-1 bg-white dark:bg-gray-900 rounded">
                             <span className="text-[10px] text-gray-400 uppercase font-bold mb-1">{field}</span>
-                            <div className="flex items-center space-x-2">
-                              <button onClick={() => updateHold(product.id, field, -1)} className="w-8 h-8 flex justify-center items-center bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700"><Minus size={14}/></button>
+                            <div className="ui-stepper flex items-center space-x-2">
+                              <button aria-label={`Decrease held ${field} for ${product.name}`} onClick={() => updateHold(product.id, field, -1)} className="w-8 h-8 flex justify-center items-center bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700"><Minus size={14}/></button>
                               <span className="font-bold text-sm w-4 text-center">{holdQty[field]}</span>
-                              <button onClick={() => updateHold(product.id, field, 1)} className="w-8 h-8 flex justify-center items-center bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700"><Plus size={14}/></button>
+                              <button aria-label={`Increase held ${field} for ${product.name}`} onClick={() => updateHold(product.id, field, 1)} className="w-8 h-8 flex justify-center items-center bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700"><Plus size={14}/></button>
                             </div>
                           </div>
                         ))}
@@ -312,7 +312,7 @@ export default function Unload() {
         </div>
       </div>
 
-      <div className="fixed left-0 right-0 p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 print:hidden z-40" style={{ bottom: "calc(4rem + env(safe-area-inset-bottom, 0px))" }}>
+      <div className="ui-actions p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 print:hidden z-40">
         {submitError && (
           <div role="alert" className="mb-2 rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:bg-red-900/30 dark:text-red-300">
             {submitError}

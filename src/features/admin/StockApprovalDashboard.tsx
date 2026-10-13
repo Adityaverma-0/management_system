@@ -141,13 +141,13 @@ export default function StockApprovalDashboard() {
     return (
       <div className="w-full max-w-none space-y-6 p-4 text-sm text-gray-900 dark:text-gray-100">
         <div className="flex items-center gap-3">
-          <button onClick={() => setSelectedReq(null)} className="rounded-full p-2 hover:bg-gray-200 dark:hover:bg-gray-800">
+          <button aria-label="Go back" onClick={() => setSelectedReq(null)} className="rounded-full p-2 hover:bg-gray-200 dark:hover:bg-gray-800">
             <ArrowLeft size={22} />
           </button>
           <h2 className="text-xl font-bold">Stock Request Detail</h2>
         </div>
 
-        {error && <div className="rounded border border-red-200 bg-red-50 p-3 text-red-700">{error}</div>}
+        {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-red-700">{error}</div>}
 
         <div className="overflow-x-auto rounded border border-gray-200 dark:border-gray-800">
           <table className="w-full text-left border-collapse bg-white dark:bg-gray-900">
@@ -250,7 +250,7 @@ export default function StockApprovalDashboard() {
         </button>
       </div>
 
-      {error && <div className="rounded border border-red-200 bg-red-50 p-3 text-red-700">{error}</div>}
+      {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-red-700">{error}</div>}
 
       <div className="grid grid-cols-2 gap-3">
         <div className="rounded border border-amber-200 bg-amber-50 p-4 dark:bg-amber-900/20 dark:border-amber-800/50">
@@ -265,10 +265,10 @@ export default function StockApprovalDashboard() {
 
       <div className="space-y-3">
         {requests.map(req => (
-          <div
+          <div role="button" tabIndex={0} onKeyDown={event => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); event.currentTarget.click(); } }}
             key={req.id}
             onClick={() => setSelectedReq(req)}
-            className="cursor-pointer rounded border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 hover:border-blue-500 transition-colors"
+            className="ui-card cursor-pointer rounded border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 hover:border-blue-500 transition-colors"
           >
             <div className="flex justify-between items-start">
               <div>

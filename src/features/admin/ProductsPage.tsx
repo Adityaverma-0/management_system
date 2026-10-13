@@ -65,28 +65,28 @@ export default function ProductsPage() {
   return (
     <div className="space-y-4 dark:text-gray-100">
       <h2 className="text-2xl font-bold">Products</h2>
-      {error && <p className="text-red-600">{error}</p>}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 space-y-3">
+      {error && <p role="alert" className="text-red-600">{error}</p>}
+      <div className="ui-card bg-white dark:bg-gray-800 rounded-lg shadow p-4 space-y-3">
         <h3 className="font-bold">Add / edit product</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <input className="border dark:border-gray-600 bg-transparent rounded p-2" placeholder="Name" value={name} onChange={e => setName(e.target.value)} />
-          <input className="border dark:border-gray-600 bg-transparent rounded p-2" placeholder="Price per strip (Rs)" value={pricePerStrip} onChange={e => setPricePerStrip(e.target.value)} />
-          <input className="border dark:border-gray-600 bg-transparent rounded p-2" placeholder="Pieces per strip" value={unitsPerStrip} onChange={e => setUnitsPerStrip(e.target.value)} />
-          <input className="border dark:border-gray-600 bg-transparent rounded p-2" placeholder="Strips per box" value={stripsPerBox} onChange={e => setStripsPerBox(e.target.value)} />
+          <label className="ui-field flex-1"><span>Name</span><input aria-label="Name" className="border dark:border-gray-600 bg-transparent rounded p-2" placeholder="Name" value={name} onChange={e => setName(e.target.value)} /></label>
+          <label className="ui-field flex-1"><span>Price per strip (Rs)</span><input aria-label="Price per strip (Rs)" className="border dark:border-gray-600 bg-transparent rounded p-2" placeholder="Price per strip (Rs)" value={pricePerStrip} onChange={e => setPricePerStrip(e.target.value)} /></label>
+          <label className="ui-field flex-1"><span>Pieces per strip</span><input aria-label="Pieces per strip" className="border dark:border-gray-600 bg-transparent rounded p-2" placeholder="Pieces per strip" value={unitsPerStrip} onChange={e => setUnitsPerStrip(e.target.value)} /></label>
+          <label className="ui-field flex-1"><span>Strips per box</span><input aria-label="Strips per box" className="border dark:border-gray-600 bg-transparent rounded p-2" placeholder="Strips per box" value={stripsPerBox} onChange={e => setStripsPerBox(e.target.value)} /></label>
           {(['sku', 'barcode', 'hsn', 'uom'] as const).map(field => <label key={field} className="text-sm">{field.toUpperCase()} (optional)<input className="border dark:border-gray-600 bg-transparent rounded p-2 w-full" value={metadata[field]} maxLength={field === 'hsn' ? 20 : field === 'uom' ? 30 : 100} onChange={e => setMetadata(current => ({ ...current, [field]: e.target.value }))} /></label>)}
         </div>
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={active} onChange={e => setActive(e.target.checked)} /> Active</label>
         {preview && <p className="text-green-600 text-sm font-semibold">{preview}</p>}
-        {validationError && <p className="text-amber-600 text-sm">{validationError}</p>}
+        {validationError && <p role="alert" className="text-amber-600 text-sm">{validationError}</p>}
         <div className="flex gap-2">
           <button onClick={save} className="bg-blue-600 text-white rounded px-4 py-2">{editId ? 'Update' : 'Add'}</button>
           {editId && <button onClick={() => { setEditId(''); setName(''); setPricePerStrip(''); setUnitsPerStrip(''); setStripsPerBox(''); setActive(true); setMetadata({ sku: '', barcode: '', hsn: '', uom: '' }); }} className="border rounded px-4 py-2">Cancel</button>}
         </div>
         <p className="text-xs text-gray-500">Price/conversion edits change only future calculations; historical ledger entries keep their original snapshot.</p>
       </div>
-      <input className="border dark:border-gray-600 bg-transparent rounded p-2 w-full" placeholder="Search products…" value={search} onChange={e => setSearch(e.target.value)} />
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-        <table className="min-w-full text-sm">
+      <input aria-label="Search products…" className="border dark:border-gray-600 bg-transparent rounded p-2 w-full" placeholder="Search products…" value={search} onChange={e => setSearch(e.target.value)} />
+      <div className="ui-card bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+        <div className="ui-table-scroll"><table className="min-w-full text-sm">
           <thead className="text-left text-gray-500"><tr><th className="p-2">Name</th><th className="p-2">Price/strip</th><th className="p-2">Conversion</th><th className="p-2">Active</th><th className="p-2"></th></tr></thead>
           <tbody>{filtered.map(p => (
             <tr key={p.id} className="border-t dark:border-gray-700">
@@ -97,7 +97,7 @@ export default function ProductsPage() {
               <td className="p-2 text-right"><button className="text-blue-600" onClick={() => { setEditId(p.id); setName(p.name); setPricePerStrip(String(Number(((p.price_paise * (p.units_per_strip || 1)) / 100).toFixed(2)))); setUnitsPerStrip(String(p.units_per_strip)); setStripsPerBox(String(p.strips_per_box)); setActive(!!p.active); setMetadata({ sku: p.sku || '', barcode: p.barcode || '', hsn: p.hsn || '', uom: p.uom || '' }); }}>Edit</button></td>
             </tr>
           ))}</tbody>
-        </table>
+        </table></div>
       </div>
     </div>
   );

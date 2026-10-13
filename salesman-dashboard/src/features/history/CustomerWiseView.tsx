@@ -34,7 +34,7 @@ export default function CustomerWiseView({ invoices, customers }: { invoices: In
   return (
     <div className="space-y-3">
       {data.map((d, i) => (
-        <div key={i} className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
+        <div key={i} className="ui-card bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
           <div className="flex justify-between items-start">
             <div>
               <h4 className="font-bold">{d.name}</h4>

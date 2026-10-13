@@ -186,7 +186,7 @@ export default function InventoryImport() {
           ))}
         </div>
       </fieldset>
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 space-y-2">
+      <div className="ui-card bg-white dark:bg-gray-800 rounded-lg shadow p-4 space-y-2">
         <h3 className="font-bold">3. Save to Inventory</h3>
         <p className="text-xs text-gray-500">Review quantities, units and purchase prices before saving to the receiving godown.</p>
         {invoiceTotal && lines.length > 0 && lines.every(line => line.line_total !== '') && Math.abs(lines.reduce((sum, line) => sum + Math.round(Number(line.line_total) * 100), 0) - Math.round(Number(invoiceTotal) * 100)) > 1 && <p role="alert" className="text-amber-700">Invoice total differs from the sum of line totals. Check missing pages, tax, freight and rounding.</p>}

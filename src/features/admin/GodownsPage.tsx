@@ -79,17 +79,17 @@ export default function GodownsPage() {
   return (
     <div className="space-y-4 dark:text-gray-100">
       <h2 className="text-2xl font-bold">Godowns</h2>
-      {error && <p className="text-red-600">{error}</p>}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 space-y-3">
+      {error && <p role="alert" className="text-red-600">{error}</p>}
+      <div className="ui-card bg-white dark:bg-gray-800 rounded-lg shadow p-4 space-y-3">
         <h3 className="font-bold">Add / edit godown</h3>
         <div className="flex flex-wrap gap-2">
-          <input className="border dark:border-gray-600 bg-transparent rounded p-2" placeholder="Godown name" value={name} onChange={e => setName(e.target.value)} />
-          <input className="border dark:border-gray-600 bg-transparent rounded p-2" placeholder="Location (e.g. Hardpiplya/Dewas)" value={location} onChange={e => setLocation(e.target.value)} />
+          <label className="ui-field flex-1"><span>Godown name</span><input aria-label="Godown name" className="border dark:border-gray-600 bg-transparent rounded p-2" placeholder="Godown name" value={name} onChange={e => setName(e.target.value)} /></label>
+          <label className="ui-field flex-1"><span>Location (e.g. Hardpiplya/Dewas)</span><input aria-label="Location (e.g. Hardpiplya/Dewas)" className="border dark:border-gray-600 bg-transparent rounded p-2" placeholder="Location (e.g. Hardpiplya/Dewas)" value={location} onChange={e => setLocation(e.target.value)} /></label>
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={active} onChange={e => setActive(e.target.checked)} /> Active</label>
           <button onClick={saveGodown} className="bg-blue-600 text-white rounded px-4 py-2">{editId ? 'Update' : 'Add'}</button>
           {editId && <button onClick={() => { setEditId(''); setName(''); setLocation(''); setActive(true); }} className="border rounded px-4 py-2">Cancel</button>}
         </div>
-        <table className="min-w-full text-sm">
+        <div className="ui-table-scroll"><table className="min-w-full text-sm">
           <thead className="text-left text-gray-500"><tr><th className="p-2">Name</th><th className="p-2">Location</th><th className="p-2"></th></tr></thead>
           <tbody>{godowns.map(g => (
             <tr key={g.id} className="border-t dark:border-gray-700">
@@ -100,7 +100,7 @@ export default function GodownsPage() {
               <td className="p-2 text-right"><button className="text-blue-600" onClick={() => { setEditId(g.id); setName(g.name); setLocation(g.location_name); setActive(g.active !== false); }}>Edit</button></td>
             </tr>
           ))}</tbody>
-        </table>
+        </table></div>
       </div>
 
       <div className="flex gap-2">
@@ -110,9 +110,9 @@ export default function GodownsPage() {
       </div>
 
       {tab === 'stock' && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 space-y-3">
-          <input className="border dark:border-gray-600 bg-transparent rounded p-2 w-full" placeholder="Search product…" value={search} onChange={e => setSearch(e.target.value)} />
-          <table className="min-w-full text-sm">
+        <div className="ui-card bg-white dark:bg-gray-800 rounded-lg shadow p-4 space-y-3">
+          <input aria-label="Search product…" className="border dark:border-gray-600 bg-transparent rounded p-2 w-full" placeholder="Search product…" value={search} onChange={e => setSearch(e.target.value)} />
+          <div className="ui-table-scroll"><table className="min-w-full text-sm">
             <thead className="text-left text-gray-500"><tr><th className="p-2">Product</th><th className="p-2">Quantity</th><th className="p-2">Value</th><th className="p-2">Status</th></tr></thead>
             <tbody>{filteredStock.map(row => {
               const prod = toProduct(row);
@@ -126,15 +126,15 @@ export default function GodownsPage() {
                 </tr>
               );
             })}</tbody>
-          </table>
+          </table></div>
           <OlderLogs url={`${API_URL}/admin/godowns/${selected}/history`} rows={history} onRows={setHistory} />
         </div>
       )}
 
       {tab === 'history' && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 space-y-3">
-          <input className="border dark:border-gray-600 bg-transparent rounded p-2 w-full" placeholder="Filter by type or product id…" value={histSearch} onChange={e => setHistSearch(e.target.value)} />
-          <table className="min-w-full text-sm">
+        <div className="ui-card bg-white dark:bg-gray-800 rounded-lg shadow p-4 space-y-3">
+          <input aria-label="Filter by type or product id…" className="border dark:border-gray-600 bg-transparent rounded p-2 w-full" placeholder="Filter by type or product id…" value={histSearch} onChange={e => setHistSearch(e.target.value)} />
+          <div className="ui-table-scroll"><table className="min-w-full text-sm">
             <thead className="text-left text-gray-500"><tr><th className="p-2">When</th><th className="p-2">Type</th><th className="p-2">Product</th><th className="p-2">Qty</th><th className="p-2">Reason</th></tr></thead>
             <tbody>{filteredHistory.map(r => (
               <tr key={r.id} className="border-t dark:border-gray-700">
@@ -145,7 +145,7 @@ export default function GodownsPage() {
                 <td className="p-2">{r.reason || '-'}</td>
               </tr>
             ))}</tbody>
-          </table>
+          </table></div>
         </div>
       )}
 
@@ -186,33 +186,33 @@ function StockEntryForm({ mode, godowns, products, selectedGodown, onDone }: any
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 space-y-3">
+    <div className="ui-card bg-white dark:bg-gray-800 rounded-lg shadow p-4 space-y-3">
       <h3 className="font-bold">{mode === 'IN' ? 'Stock in' : 'Stock adjustment'}</h3>
-      <select value={godownId} onChange={e => setGodownId(e.target.value)} className="border dark:border-gray-600 bg-transparent rounded p-2 w-full">
+      <label className="ui-field flex-1"><span>Select godown</span><select aria-label="Select godown" value={godownId} onChange={e => setGodownId(e.target.value)} className="border dark:border-gray-600 bg-transparent rounded p-2 w-full">
         <option value="">Select godown</option>{godowns.map((g: any) => <option key={g.id} value={g.id}>{g.name}</option>)}
-      </select>
-      <select value={productId} onChange={e => setProductId(e.target.value)} className="border dark:border-gray-600 bg-transparent rounded p-2 w-full">
+      </select></label>
+      <label className="ui-field flex-1"><span>Product</span><select aria-label="Select product" value={productId} onChange={e => setProductId(e.target.value)} className="border dark:border-gray-600 bg-transparent rounded p-2 w-full">
         <option value="">Select product</option>{products.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
-      </select>
+      </select></label>
       <div className="flex gap-2">
-        <input type="number" min="0" className="border dark:border-gray-600 bg-transparent rounded p-2 flex-1" placeholder="Quantity" value={amount} onChange={e => setAmount(e.target.value)} />
-        <select value={unit} onChange={e => setUnit(e.target.value as any)} className="border dark:border-gray-600 bg-transparent rounded p-2">
+        <label className="ui-field flex-1"><span>Quantity</span><input aria-label="Quantity" type="number" min="0" className="border dark:border-gray-600 bg-transparent rounded p-2 flex-1" placeholder="Quantity" value={amount} onChange={e => setAmount(e.target.value)} /></label>
+        <label className="ui-field flex-1"><span>BOX</span><select aria-label="BOX" value={unit} onChange={e => setUnit(e.target.value as any)} className="border dark:border-gray-600 bg-transparent rounded p-2">
           <option>BOX</option><option>STRIP</option><option>PIECE</option>
-        </select>
+        </select></label>
         {mode === 'IN' ? (
           <span className="border dark:border-gray-600 rounded p-2 text-sm">Type: IN</span>
         ) : (
-          <select value={kind} onChange={e => setKind(e.target.value)} className="border dark:border-gray-600 bg-transparent rounded p-2">
+          <label className="ui-field flex-1"><span>ADJ+</span><select aria-label="ADJ+" value={kind} onChange={e => setKind(e.target.value)} className="border dark:border-gray-600 bg-transparent rounded p-2">
             <option value="ADJ_PLUS">ADJ+</option><option value="ADJ_MINUS">ADJ-</option>
-          </select>
+          </select></label>
         )}
       </div>
-      <select value={reason} onChange={e => setReason(e.target.value)} className="border dark:border-gray-600 bg-transparent rounded p-2 w-full">
+      <label className="ui-field flex-1"><span>Select reason (required)</span><select aria-label="Select reason (required)" value={reason} onChange={e => setReason(e.target.value)} className="border dark:border-gray-600 bg-transparent rounded p-2 w-full">
         <option value="">Select reason (required)</option>{ADJUST_REASONS.map(r => <option key={r}>{r}</option>)}
-      </select>
-      <input className="border dark:border-gray-600 bg-transparent rounded p-2 w-full" placeholder="Optional note" value={note} onChange={e => setNote(e.target.value)} />
+      </select></label>
+      <label className="ui-field flex-1"><span>Optional note</span><input aria-label="Optional note" className="border dark:border-gray-600 bg-transparent rounded p-2 w-full" placeholder="Optional note" value={note} onChange={e => setNote(e.target.value)} /></label>
       <p className="text-xs text-gray-500">Stock is never allowed to go negative. Idempotency key: {idempotencyKey} (safe to retry).</p>
-      {error && <p className="text-red-600">{error}</p>}
+      {error && <p role="alert" className="text-red-600">{error}</p>}
       <button onClick={submit} className="bg-blue-600 text-white rounded px-4 py-2">Submit</button>
     </div>
   );

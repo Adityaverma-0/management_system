@@ -46,7 +46,7 @@ export default function SalesDashboard() {
         </h2>
         
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="ui-card flex bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
             <button 
               onClick={() => { setPeriod('today'); setCustomDate(''); }}
               className={`px-4 py-2 text-sm font-medium transition-colors ${period === 'today' && !customDate ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/50 dark:text-blue-200' : 'hover:bg-gray-50 dark:hover:bg-gray-700'}`}
@@ -61,10 +61,10 @@ export default function SalesDashboard() {
             >This Month</button>
           </div>
           
-          <div className="flex items-center bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 px-3 py-1.5 focus-within:ring-2 ring-blue-500">
+          <div className="ui-card flex items-center bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 px-3 py-1.5 focus-within:ring-2 ring-blue-500">
             <Calendar size={16} className="text-gray-400 mr-2" />
             <input 
-              type="date" 
+              aria-label="Sales date" type="date"
               value={customDate}
               onChange={(e) => {
                 setCustomDate(e.target.value);
@@ -84,14 +84,14 @@ export default function SalesDashboard() {
       ) : loading && !data ? (
         <div className="animate-pulse space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[1,2,3,4].map(i => <div key={i} className="bg-white dark:bg-gray-800 h-28 rounded-xl opacity-50 shadow-sm border border-gray-100 dark:border-gray-700" />)}
+            {[1,2,3,4].map(i => <div key={i} className="ui-card bg-white dark:bg-gray-800 h-28 rounded-xl opacity-50 shadow-sm border border-gray-100 dark:border-gray-700" />)}
           </div>
-          <div className="bg-white dark:bg-gray-800 h-64 rounded-xl opacity-50 shadow-sm border border-gray-100 dark:border-gray-700" />
+          <div className="ui-card bg-white dark:bg-gray-800 h-64 rounded-xl opacity-50 shadow-sm border border-gray-100 dark:border-gray-700" />
         </div>
       ) : data ? (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <div className="ui-card bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-gray-500 dark:text-gray-400 text-sm font-bold tracking-wide">TOTAL SALES</h3>
                 <div className="bg-blue-50 dark:bg-blue-900/30 p-2 rounded-lg text-blue-600 dark:text-blue-400"><IndianRupee size={20} /></div>
@@ -99,7 +99,7 @@ export default function SalesDashboard() {
               <p className="text-3xl font-bold text-gray-900 dark:text-white">{formatRupees(data.stats.totalSales)}</p>
             </div>
             
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <div className="ui-card bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-gray-500 dark:text-gray-400 text-sm font-bold tracking-wide">ORDERS</h3>
                 <div className="bg-green-50 dark:bg-green-900/30 p-2 rounded-lg text-green-600 dark:text-green-400"><ShoppingCart size={20} /></div>
@@ -107,7 +107,7 @@ export default function SalesDashboard() {
               <p className="text-3xl font-bold text-gray-900 dark:text-white">{data.stats.totalOrders}</p>
             </div>
             
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <div className="ui-card bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-gray-500 dark:text-gray-400 text-sm font-bold tracking-wide">CUSTOMERS</h3>
                 <div className="bg-purple-50 dark:bg-purple-900/30 p-2 rounded-lg text-purple-600 dark:text-purple-400"><Users size={20} /></div>
@@ -115,7 +115,7 @@ export default function SalesDashboard() {
               <p className="text-3xl font-bold text-gray-900 dark:text-white">{data.stats.uniqueCustomers}</p>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <div className="ui-card bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-gray-500 dark:text-gray-400 text-sm font-bold tracking-wide">AVG ORDER VALUE</h3>
                 <div className="bg-orange-50 dark:bg-orange-900/30 p-2 rounded-lg text-orange-600 dark:text-orange-400"><TrendingUp size={20} /></div>
@@ -126,7 +126,7 @@ export default function SalesDashboard() {
 
           {data.analytics && <SalesCharts data={data.analytics} />}
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mt-6">
+          <div className="ui-card bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mt-6">
             <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
               <h3 className="font-bold text-lg">
                 Related Orders 

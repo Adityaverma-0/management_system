@@ -70,28 +70,28 @@ export default function CashCounter({ expectedCashPaise, initialBreakdown, onCha
     const count = breakdown[d.key] || 0;
     const rowAmount = count * d.valueRupees;
     return (
-      <div key={d.key} className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-800 last:border-0">
+      <div key={d.key} className="ui-cash-row flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-800 last:border-0">
         <div className="w-1/3 font-bold text-gray-700 dark:text-gray-300 text-sm">
           {d.label}
         </div>
-        <div className="flex items-center space-x-2 w-1/3 justify-center">
+        <div className="ui-stepper flex items-center space-x-2 w-1/3 justify-center">
           <button 
-            onClick={() => updateCount(d.key, '', -1)} 
-            className="w-8 h-8 flex justify-center items-center bg-gray-100 dark:bg-gray-800 rounded-full active:scale-95"
+            aria-label={`Decrease ${d.label} count`} onClick={() => updateCount(d.key, '', -1)}
+            className="w-8 h-8 flex justify-center items-center bg-gray-100 dark:bg-gray-800 rounded-full active:opacity-90"
           >
             <Minus size={16}/>
           </button>
           <input 
             type="number"
-            inputMode="numeric"
+            inputMode="numeric" aria-label={`${d.label} count`}
             value={count === 0 ? '' : count}
             onChange={e => updateCount(d.key, e.target.value)}
             className="w-14 text-center font-bold text-lg bg-transparent border-b-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 outline-none"
             placeholder="0"
           />
           <button 
-            onClick={() => updateCount(d.key, '', 1)} 
-            className="w-8 h-8 flex justify-center items-center bg-gray-100 dark:bg-gray-800 rounded-full active:scale-95"
+            aria-label={`Increase ${d.label} count`} onClick={() => updateCount(d.key, '', 1)}
+            className="w-8 h-8 flex justify-center items-center bg-gray-100 dark:bg-gray-800 rounded-full active:opacity-90"
           >
             <Plus size={16}/>
           </button>
@@ -104,10 +104,10 @@ export default function CashCounter({ expectedCashPaise, initialBreakdown, onCha
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mt-4">
-      <div 
+    <div className="ui-card bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mt-4">
+      <div role="button" tabIndex={0} onKeyDown={event => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); event.currentTarget.click(); } }}
         className="p-4 bg-gray-50 dark:bg-gray-900 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center cursor-pointer"
-        onClick={() => setIsCollapsed(!isCollapsed)}
+        aria-expanded={!isCollapsed} onClick={() => setIsCollapsed(!isCollapsed)}
       >
         <h3 className="text-lg font-bold">Count your cash</h3>
         {isCollapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
@@ -137,7 +137,7 @@ export default function CashCounter({ expectedCashPaise, initialBreakdown, onCha
             </div>
           </div>
 
-          <div className="bg-gray-100 dark:bg-gray-900 p-4 border-t border-gray-200 dark:border-gray-700 sticky bottom-0 flex justify-between items-center">
+          <div className="bg-gray-100 dark:bg-gray-900 p-4 border-t border-gray-200 dark:border-gray-700  flex justify-between items-center">
             <div className="text-xs text-gray-500 font-medium space-y-1">
               <div>Total Notes: <span className="font-bold text-gray-800 dark:text-gray-200">{noteCount}</span></div>
               <div>Total Coins: <span className="font-bold text-gray-800 dark:text-gray-200">{coinCount}</span></div>

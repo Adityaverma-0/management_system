@@ -126,13 +126,13 @@ export default function ApprovalDashboard() {
     return (
       <div className="w-full max-w-none space-y-6 p-4 text-sm text-gray-900 dark:text-gray-100">
         <div className="flex items-center gap-3">
-          <button onClick={() => setSelectedReq(null)} className="rounded-full p-2 hover:bg-gray-200 dark:hover:bg-gray-800">
+          <button aria-label="Go back" onClick={() => setSelectedReq(null)} className="rounded-full p-2 hover:bg-gray-200 dark:hover:bg-gray-800">
             <ArrowLeft size={22} />
           </button>
           <h2 className="text-xl font-bold">Request Detail</h2>
         </div>
 
-        {error && <div className="rounded border border-red-200 bg-red-50 p-3 text-red-700">{error}</div>}
+        {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-red-700">{error}</div>}
 
         {/* 1. Header table */}
         <div className="overflow-x-auto rounded border border-gray-200 dark:border-gray-800">
@@ -185,7 +185,7 @@ export default function ApprovalDashboard() {
         </div>
 
         {/* 3. Cash received table */}
-        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded">
+        <div className="ui-card bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded">
           <CashBreakdownTable
             breakdown={day.cashDenominationBreakdown || {}}
             totalPaise={day.cashCollected}
@@ -246,7 +246,7 @@ export default function ApprovalDashboard() {
 
       <div className="space-y-3">
         {requests.map(reqObj => (
-          <div key={reqObj.id} onClick={() => setSelectedReq(reqObj)} className="cursor-pointer rounded border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 hover:border-blue-500">
+          <div role="button" tabIndex={0} onKeyDown={event => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); event.currentTarget.click(); } }} key={reqObj.id} onClick={() => setSelectedReq(reqObj)} className="ui-card cursor-pointer rounded border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 hover:border-blue-500">
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="font-bold text-gray-900 dark:text-white">{getSalesmanName(reqObj.requestData.salesmanId)}</h3>

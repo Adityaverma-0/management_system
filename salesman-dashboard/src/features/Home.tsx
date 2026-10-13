@@ -104,9 +104,9 @@ export default function Home() {
   const hasHeldStock = heldStockItems.length > 0;
 
   return (
-    <div className="space-y-6 min-h-[calc(100vh-8rem)] flex flex-col justify-between">
+    <div className="space-y-6 flex flex-col">
       <div className="space-y-6">
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex justify-between items-center">
+        <div className="ui-card bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-wrap gap-4 justify-between items-center">
           <div>
             <h2 className="text-xl font-bold mb-1">Welcome, {summary.salesmanName || summary.salesmanId}</h2>
             <p className="text-sm text-gray-500">{summary.vehicleName || summary.vehicleId}</p>
@@ -134,7 +134,7 @@ export default function Home() {
           </div>
         )}
 
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-x-auto">
+        <div className="ui-card bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-x-auto">
           <div className="flex items-center min-w-max space-x-2">
             {STATE_ORDER.map((state, i) => {
               const isPast = i < currentIndex;
@@ -169,7 +169,7 @@ export default function Home() {
         {action && (
           <button
             onClick={action.action}
-            className="w-full bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-bold py-5 rounded-2xl text-xl shadow-lg transition-transform active:scale-95 flex items-center justify-center"
+            className="w-full bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-bold py-3 rounded-xl text-lg shadow-sm transition-transform active:opacity-90 flex items-center justify-center"
           >
             {action.label}
           </button>
@@ -178,17 +178,17 @@ export default function Home() {
         {summary.state === 'ON_ROUTE' && (
           <button
             onClick={() => navigate('/sell')}
-            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-5 rounded-2xl text-xl shadow-lg transition-transform active:scale-95 flex flex-col items-center justify-center"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-lg shadow-sm transition-transform active:opacity-90 flex gap-3 items-center justify-center"
           >
-            <ShoppingCart size={32} className="mb-2" />
+            <ShoppingCart size={24} />
             Direct Sell
           </button>
         )}
         
         {lowStockCount > 0 && (summary.state === 'NOT_STARTED' || summary.state === 'ON_ROUTE') && (
-          <div 
+          <div role="button" tabIndex={0} onKeyDown={event => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); event.currentTarget.click(); } }}
             onClick={() => navigate('/load-stock')}
-            className="bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300 p-4 rounded-xl font-medium border border-red-200 dark:border-red-800/30 flex items-center justify-between cursor-pointer active:scale-95 transition-transform"
+            className="bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300 p-4 rounded-xl font-medium border border-red-200 dark:border-red-800/30 flex items-center justify-between cursor-pointer active:opacity-90 transition-transform"
           >
             <div className="flex items-center">
               <AlertTriangle size={20} className="mr-3" />
@@ -207,7 +207,7 @@ export default function Home() {
 
       <SalesAnalytics />
 
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+      <div className="ui-card bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
         <h3 className="font-bold text-lg mb-3">Today's Accounts</h3>
         <div className="grid grid-cols-2 gap-3 mb-3">
           <div className="bg-green-50 dark:bg-green-900/10 p-3 rounded-lg border border-green-100 dark:border-green-900/30">

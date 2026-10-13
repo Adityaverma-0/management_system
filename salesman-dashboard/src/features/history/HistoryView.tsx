@@ -156,26 +156,26 @@ export default function HistoryView() {
       {/* Segmented Control */}
       <div className="flex bg-gray-200 dark:bg-gray-800 p-1 rounded-lg">
         <button 
-          onClick={() => setViewMode('DAY')}
-          className={`flex-1 py-2 text-sm font-bold rounded-md flex items-center justify-center ${viewMode === 'DAY' ? 'bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'}`}
-        ><Calendar size={16} className="mr-2"/> Day-wise</button>
+          aria-pressed={viewMode === 'DAY'} onClick={() => setViewMode('DAY')}
+          className={`flex-1 py-2 text-sm font-bold rounded-md flex flex-col sm:flex-row gap-1 items-center justify-center ${viewMode === 'DAY' ? 'bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'}`}
+        ><Calendar size={16} className="shrink-0 sm:mr-1"/> Day-wise</button>
         <button 
-          onClick={() => setViewMode('CUSTOMER')}
-          className={`flex-1 py-2 text-sm font-bold rounded-md flex items-center justify-center ${viewMode === 'CUSTOMER' ? 'bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'}`}
-        ><Users size={16} className="mr-2"/> Customer</button>
+          aria-pressed={viewMode === 'CUSTOMER'} onClick={() => setViewMode('CUSTOMER')}
+          className={`flex-1 py-2 text-sm font-bold rounded-md flex flex-col sm:flex-row gap-1 items-center justify-center ${viewMode === 'CUSTOMER' ? 'bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'}`}
+        ><Users size={16} className="shrink-0 sm:mr-1"/> Customer</button>
         <button 
-          onClick={() => setViewMode('INVOICES')}
-          className={`flex-1 py-2 text-sm font-bold rounded-md flex items-center justify-center ${viewMode === 'INVOICES' ? 'bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'}`}
-        ><Receipt size={16} className="mr-2"/> Invoices</button>
+          aria-pressed={viewMode === 'INVOICES'} onClick={() => setViewMode('INVOICES')}
+          className={`flex-1 py-2 text-sm font-bold rounded-md flex flex-col sm:flex-row gap-1 items-center justify-center ${viewMode === 'INVOICES' ? 'bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'}`}
+        ><Receipt size={16} className="shrink-0 sm:mr-1"/> Invoices</button>
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm flex flex-col space-y-3">
+      <div className="ui-card bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm flex flex-col space-y-3">
         <div className="flex justify-between items-center">
           <div className="text-sm font-bold text-gray-700 dark:text-gray-300">
             {filteredInvoices.length} Bills | {formatRupees(totals.sales)}
           </div>
-          <button onClick={() => setShowFilters(!showFilters)} className="flex items-center text-blue-600 text-sm font-bold bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 rounded-lg">
+          <button aria-expanded={showFilters} onClick={() => setShowFilters(!showFilters)} className="flex items-center text-blue-600 text-sm font-bold bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 rounded-lg">
             <Filter size={16} className="mr-1" /> Filters
           </button>
         </div>
@@ -184,7 +184,7 @@ export default function HistoryView() {
           <div className="pt-2 border-t border-gray-100 dark:border-gray-700 space-y-3 text-sm">
             {/* Extremely simplified filter UI for MVP, real would use a bottom sheet component */}
             <div className="grid grid-cols-2 gap-2">
-              <select 
+              <select aria-label="Bill status"
                 className="border p-2 rounded bg-gray-50 dark:bg-gray-900"
                 value={filters.billStatus}
                 onChange={e => setFilters({...filters, billStatus: e.target.value as any})}
@@ -209,7 +209,7 @@ export default function HistoryView() {
                 Reset Filters
               </button>
             </div>
-            <input 
+            <input aria-label="Search Invoice Number..."
               type="text"
               placeholder="Search Invoice Number..."
               className="w-full border p-2 rounded bg-gray-50 dark:bg-gray-900"
@@ -224,7 +224,7 @@ export default function HistoryView() {
       {loading ? (
         <div className="text-center p-8 text-gray-500">Loading history...</div>
       ) : filteredInvoices.length === 0 ? (
-        <div className="text-center p-8 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700">
+        <div className="ui-card text-center p-8 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700">
           <p className="text-gray-500 font-bold">No bills for these filters.</p>
           <button 
             onClick={() => setFilters({

@@ -19,7 +19,7 @@ export default function HistoryDayDetail({ day, invoices }: { day: WorkDay, invo
   return (
     <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-100 dark:border-gray-700 text-sm overflow-hidden">
       
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex flex-wrap gap-2 justify-between items-center mb-4">
         <h3 className="font-bold text-lg">Day Details</h3>
         <button onClick={() => window.print()} className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-1 rounded font-bold text-sm">
           Print Report

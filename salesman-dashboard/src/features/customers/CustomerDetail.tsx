@@ -27,21 +27,21 @@ export default function CustomerDetail() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-950 pb-24">
       <div className="bg-white dark:bg-gray-900 shadow-sm px-4 py-3 flex items-center sticky top-0 z-40">
-        <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800">
+        <button aria-label="Go back" onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800">
           <ArrowLeft size={24} />
         </button>
         <h2 className="text-xl font-bold ml-2">Customer Profile</h2>
       </div>
 
       <div className="p-4 space-y-4">
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 text-center">
+        <div className="ui-card bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 text-center">
           <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full mx-auto flex items-center justify-center mb-3">
             <User size={32} />
           </div>
           <h3 className="font-bold text-2xl">{customer.name}</h3>
           <p className="text-gray-500 font-bold mb-4">{customer.shopName}</p>
           
-          <div className="flex justify-center space-x-6 text-sm text-gray-600 dark:text-gray-400 mb-6">
+          <div className="flex flex-wrap justify-center gap-3 text-sm text-gray-600 dark:text-gray-400 mb-6">
             <div className="flex items-center"><Phone size={16} className="mr-1"/> {customer.mobile}</div>
             {customer.area && <div className="flex items-center"><MapPin size={16} className="mr-1"/> {customer.area}</div>}
           </div>
@@ -61,7 +61,7 @@ export default function CustomerDetail() {
 
         <div className="space-y-3">
           {bills.map(bill => (
-            <div key={bill.id} onClick={() => navigate(`/print/${bill.id}`)} className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex justify-between items-center cursor-pointer active:scale-95 transition-transform">
+            <div role="button" tabIndex={0} onKeyDown={event => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); event.currentTarget.click(); } }} key={bill.id} onClick={() => navigate(`/print/${bill.id}`)} className="ui-card bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex justify-between items-center cursor-pointer active:opacity-90 transition-transform">
               <div>
                 <div className="flex items-center space-x-2 mb-1">
                   <span className="font-bold">{bill.invoiceNumber}</span>

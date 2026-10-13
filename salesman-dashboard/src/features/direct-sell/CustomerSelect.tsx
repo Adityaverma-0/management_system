@@ -81,9 +81,9 @@ export default function CustomerSelect() {
   const displayList = debouncedSearch ? filtered : recent;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-64px)] pb-16 bg-gray-50 dark:bg-gray-950">
+    <div className="flex flex-col ui-workflow bg-gray-50 dark:bg-gray-950">
       <div className="bg-white dark:bg-gray-900 shadow-sm px-4 py-3 flex items-center sticky top-0 z-40">
-        <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800">
+        <button aria-label="Go back" onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800">
           <ArrowLeft size={24} />
         </button>
         <h2 className="text-xl font-bold ml-2">Select Customer</h2>
@@ -94,7 +94,7 @@ export default function CustomerSelect() {
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Search size={20} className="text-gray-400" />
           </div>
-          <input
+          <input aria-label="Name, Shop or Mobile..."
             type="text"
             placeholder="Name, Shop or Mobile..."
             value={searchTerm}
@@ -126,10 +126,10 @@ export default function CustomerSelect() {
 
         <div className="space-y-3">
           {displayList.map(c => (
-            <div 
+            <div role="button" tabIndex={0} onKeyDown={event => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); event.currentTarget.click(); } }}
               key={c.id} 
               onClick={() => navigate(`/sell/${c.id}`)}
-              className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-blue-500 transition-colors active:scale-95"
+              className="ui-card bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-blue-500 transition-colors active:opacity-90"
             >
               <div className="flex justify-between items-start mb-1">
                 <h4 className="font-bold text-lg" onClick={() => navigate(`/sell/${c.id}`)}>{c.name}</h4>
@@ -141,7 +141,7 @@ export default function CustomerSelect() {
                   )}
                   <button 
                     onClick={(e) => { e.stopPropagation(); navigate(`/customer/${c.id}`); }}
-                    className="p-1.5 bg-gray-100 dark:bg-gray-700 text-gray-500 hover:text-blue-600 rounded-lg active:scale-95"
+                    className="p-1.5 bg-gray-100 dark:bg-gray-700 text-gray-500 hover:text-blue-600 rounded-lg active:opacity-90"
                   >
                     <User size={18} />
                   </button>

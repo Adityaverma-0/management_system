@@ -40,10 +40,10 @@ export default function InvoicePrint() {
   return (
     <div className="bg-gray-100 dark:bg-gray-900 min-h-screen pt-4 pb-24">
       {/* Action Buttons - Hidden when printing */}
-      <div className="px-4 mb-4 space-y-3 print:hidden">
+      <div className="px-4 mb-4 space-y-3 print:hidden max-w-xl mx-auto">
         <button 
           onClick={handlePrint}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl text-lg flex items-center justify-center space-x-2"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-lg flex items-center justify-center space-x-2"
         >
           <Printer size={20} />
           <span>Print Bill</span>
@@ -51,7 +51,7 @@ export default function InvoicePrint() {
         
         <button 
           onClick={() => navigate('/')}
-          className="w-full bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 font-bold py-4 rounded-xl text-lg flex items-center justify-center space-x-2"
+          className="w-full bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 font-bold py-3 rounded-xl text-lg flex items-center justify-center space-x-2"
         >
           <Check size={20} />
           <span>Done</span>

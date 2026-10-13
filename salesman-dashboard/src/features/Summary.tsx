@@ -46,9 +46,9 @@ export default function Summary() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+      <div className="ui-card bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
         <h3 className="font-bold text-lg mb-3">Accounts Breakdown</h3>
-        <div className="grid grid-cols-3 gap-3 mb-1">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-1">
           <div className="bg-green-50 dark:bg-green-900/10 p-2 rounded-lg text-center border border-green-100 dark:border-green-900/30">
             <div className="text-green-600 text-[10px] font-bold mb-1"><Banknote size={12} className="inline mr-1"/>CASH</div>
             <div className="font-bold text-sm">{formatRupees(accounts.cash)}</div>

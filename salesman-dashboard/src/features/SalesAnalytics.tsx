@@ -3,7 +3,7 @@ import { getSalesAnalytics, SalesAnalyticsData } from '../data/realApi';
 import { formatRupees } from '../domain/money';
 
 const colors = ['#2563eb', '#16a34a', '#d97706'];
-const card = 'bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700';
+const card = 'ui-card bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700';
 export function pieSegments(values: number[]) {
   const total = values.reduce((sum, value) => sum + Math.max(0, value), 0);
   let offset = 0;

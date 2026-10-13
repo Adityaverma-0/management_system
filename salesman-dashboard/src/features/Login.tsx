@@ -28,7 +28,7 @@ export default function Login({ onLogin }: { onLogin: () => void }) {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 p-4">
-      <div className="w-full max-w-sm bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-800">
+      <div className="ui-card w-full max-w-sm bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-800">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-blue-600 dark:text-blue-400">Salesman App</h1>
           <p className="text-sm text-gray-500 mt-1">Sign in to start your day</p>
@@ -36,8 +36,8 @@ export default function Login({ onLogin }: { onLogin: () => void }) {
         
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mobile Number</label>
-            <input 
+            <label htmlFor="ui-field-1" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mobile Number</label>
+            <input id="ui-field-1"
               type="tel"
               value={mobile}
               onChange={(e) => setMobile(e.target.value)}
@@ -45,8 +45,8 @@ export default function Login({ onLogin }: { onLogin: () => void }) {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
-            <input 
+            <label htmlFor="ui-field-2" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+            <input id="ui-field-2"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -54,11 +54,11 @@ export default function Login({ onLogin }: { onLogin: () => void }) {
             />
           </div>
           
-          {error && <p className="text-red-500 text-sm font-medium">{error}</p>}
+          {error && <p role="alert" className="text-red-500 text-sm font-medium">{error}</p>}
           
           <button 
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-colors active:scale-95"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-colors active:opacity-90"
           >
             Login
           </button>

@@ -123,9 +123,9 @@ export default function LoadStock() {
   if (!summary) return <div className="p-4">{errorMsg || 'Loading...'}</div>;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-64px)] pb-16">
+    <div className="flex flex-col ui-workflow">
       <div className="flex items-center space-x-4 mb-4">
-        <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800">
+        <button aria-label="Go back" onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800">
           <ArrowLeft size={24} />
         </button>
         <h2 className="text-xl font-bold">Load from {summary.warehouseName || summary.warehouseId}</h2>
@@ -135,7 +135,7 @@ export default function LoadStock() {
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <Search size={20} className="text-gray-400" />
         </div>
-        <input
+        <input aria-label="Search warehouse..."
           type="text"
           placeholder="Search warehouse..."
           value={searchTerm}
@@ -164,7 +164,7 @@ export default function LoadStock() {
             {suggestions.map(s => {
               const product = productMap.get(s.productId)!;
               return (
-                <div key={s.productId} className="flex justify-between items-center bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm border border-blue-100 dark:border-blue-800/50">
+                <div key={s.productId} className="ui-card flex justify-between items-center bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm border border-blue-100 dark:border-blue-800/50">
                   <div>
                     <div className="font-bold text-sm">{product.name}</div>
                     <div className="text-xs text-gray-500">
@@ -190,7 +190,7 @@ export default function LoadStock() {
           const remaining = calculateRemainingStock(ledger, product.id, summary.warehouseId);
           
           return (
-            <div key={product.id} className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <div key={product.id} className="ui-card bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
               <div className="flex justify-between items-start mb-3">
                 <div>
                   <h3 className="font-bold text-lg">{product.name}</h3>
@@ -198,21 +198,21 @@ export default function LoadStock() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-2">
+              <div className="ui-quantity-grid grid grid-cols-3 gap-2">
                 {(['boxes', 'strips', 'pieces'] as const).map(field => (
                   <div key={field} className="flex flex-col items-center p-2 bg-gray-50 dark:bg-gray-900 rounded-lg">
                     <span className="text-xs text-gray-500 uppercase font-bold mb-2">{field}</span>
-                    <div className="flex items-center space-x-3">
+                    <div className="ui-stepper flex items-center space-x-3">
                       <button 
                         aria-label={`Decrease ${field} for ${product.name}`} onClick={() => updateCart(product.id, field, -1)}
-                        className="w-8 h-8 rounded-full bg-white dark:bg-gray-800 shadow flex items-center justify-center active:scale-95"
+                        className="w-8 h-8 rounded-full bg-white dark:bg-gray-800 shadow flex items-center justify-center active:opacity-90"
                       >
                         <Minus size={16} />
                       </button>
                       <span className="font-bold text-lg w-4 text-center">{qty[field]}</span>
                       <button 
                         aria-label={`Increase ${field} for ${product.name}`} onClick={() => updateCart(product.id, field, 1)}
-                        className="w-8 h-8 rounded-full bg-white dark:bg-gray-800 shadow flex items-center justify-center active:scale-95 text-blue-600"
+                        className="w-8 h-8 rounded-full bg-white dark:bg-gray-800 shadow flex items-center justify-center active:opacity-90 text-blue-600"
                       >
                         <Plus size={16} />
                       </button>
@@ -226,10 +226,10 @@ export default function LoadStock() {
       </div>
 
       {hasItems && (
-        <div className="fixed bottom-16 left-0 right-0 p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-50">
+        <div className="ui-actions   p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] ">
           <button
             onClick={handleConfirm}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl text-lg flex items-center justify-center space-x-2 active:scale-95"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl text-lg flex items-center justify-center space-x-2 active:opacity-90"
           >
             <Download size={20} />
             <span>Submit Stock Request</span>

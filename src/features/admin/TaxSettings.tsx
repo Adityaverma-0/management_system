@@ -41,16 +41,16 @@ export default function TaxSettings() {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded shadow max-w-md">
+    <div className="ui-card bg-white dark:bg-gray-800 p-6 rounded shadow max-w-md">
       <h2 className="text-xl font-bold mb-4">Tax Configuration (Admin)</h2>
       <div className="space-y-4">
         <div>
-          <label className="block text-sm">CGST %</label>
-          <input type="number" step="0.01" value={cgst} onChange={e => setCgst(Number(e.target.value))} className="w-full p-2 border rounded text-black bg-white" />
+          <label htmlFor="ui-field-1" className="block text-sm">CGST %</label>
+          <input id="ui-field-1" type="number" step="0.01" value={cgst} onChange={e => setCgst(Number(e.target.value))} className="w-full p-2 border rounded text-black bg-white" />
         </div>
         <div>
-          <label className="block text-sm">SGST %</label>
-          <input type="number" step="0.01" value={sgst} onChange={e => setSgst(Number(e.target.value))} className="w-full p-2 border rounded text-black bg-white" />
+          <label htmlFor="ui-field-2" className="block text-sm">SGST %</label>
+          <input id="ui-field-2" type="number" step="0.01" value={sgst} onChange={e => setSgst(Number(e.target.value))} className="w-full p-2 border rounded text-black bg-white" />
         </div>
         <button onClick={handleSave} className="w-full bg-blue-600 text-white p-2 rounded">Save Tax Rates</button>
         {message && <p className="text-sm text-center">{message}</p>}
