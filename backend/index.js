@@ -135,6 +135,7 @@ export async function saveInventoryImport(body, database = pool, actorId = null)
   const importRef = textField(body.import_ref, 'Invoice number', 255, true);
   const supplier = textField(body.supplier_name, 'Supplier', 255, true);
   const godownId = textField(body.godown_id, 'Receiving godown', 50, true);
+  const invoiceTotal = moneyField(body.invoice_total, 'Invoice total');
   const gstin = textField(body.supplier_gstin, 'Supplier GSTIN', 15);
   if (gstin && !/^[0-9A-Z]{15}$/i.test(gstin)) throw new ImportError('Supplier GSTIN must contain 15 letters and digits.');
   const invoiceDate = textField(body.invoice_date, 'Invoice date', 10);
@@ -167,6 +168,9 @@ export async function saveInventoryImport(body, database = pool, actorId = null)
         product_id: product.id, product_name: product.name, quantity, unit, quantity_pieces: pieces,
         purchase_price_paise: moneyField(line.unit_price, `Item ${i + 1} purchase price`, true),
         line_total_paise: moneyField(line.line_total, 'Line total'),
+        taxable_amount_paise: moneyField(line.taxable_amount, 'Taxable amount'),
+        cgst_paise: moneyField(line.cgst, 'CGST'), sgst_paise: moneyField(line.sgst, 'SGST'), igst_paise: moneyField(line.igst, 'IGST'),
+        printed_discount_paise: moneyField(line.discount_amount, 'Printed discount amount'),
         gst: numericField(line.gst, 'GST percentage', { max: 100 }),
         discount: discountType === 'PERCENT' ? discount : null,
         discount_paise: discountType === 'AMOUNT' ? moneyField(line.discount, 'Discount amount') : null,
@@ -175,6 +179,22 @@ export async function saveInventoryImport(body, database = pool, actorId = null)
         extracted_name: textField(line.description, 'Extracted product name', 500)
       };
     });
+    const discrepancies = [];
+    for (const [i, line] of lines.entries()) {
+      const gross = Math.round(line.quantity * line.purchase_price_paise);
+      if (!Number.isSafeInteger(gross)) throw new ImportError('Purchase amount is too large.');
+      const discount = line.printed_discount_paise ?? line.discount_paise ?? (line.discount !== null ? Math.round(gross * line.discount / 100) : null);
+      if (discount !== null && line.taxable_amount_paise !== null && Math.abs(gross - discount - line.taxable_amount_paise) > 1) discrepancies.push(`Item ${i + 1}: taxable amount differs from quantity × price minus discount.`);
+      if (line.printed_discount_paise !== null && line.discount !== null && Math.abs(Math.round(gross * line.discount / 100) - line.printed_discount_paise) > 1) discrepancies.push(`Item ${i + 1}: discount rate and printed discount amount differ.`);
+      const taxes = [line.cgst_paise, line.sgst_paise, line.igst_paise];
+      if (line.taxable_amount_paise !== null && line.line_total_paise !== null && taxes.some(tax => tax !== null) && Math.abs(line.taxable_amount_paise + taxes.reduce((sum, tax) => sum + (tax ?? 0), 0) - line.line_total_paise) > 1) discrepancies.push(`Item ${i + 1}: tax and line total differ.`);
+    }
+    if (invoiceTotal !== null && lines.every(line => line.line_total_paise !== null)) {
+      const sum = lines.reduce((total, line) => total + line.line_total_paise, 0);
+      if (!Number.isSafeInteger(sum)) throw new ImportError('Invoice amount is too large.');
+      if (Math.abs(sum - invoiceTotal) > 1) discrepancies.push('Invoice total differs from the sum of reviewed line totals (check tax, freight and rounding).');
+    }
+    if (discrepancies.length && body.review_acknowledged !== true) throw new ImportError(discrepancies.join(' ') + ' Review and acknowledge the discrepancy before saving.', 422, 'TOTAL_MISMATCH');
     const id = `imp_${crypto.randomUUID()}`;
     await client.query(`INSERT INTO inventory_imports
       (id, timestamp, import_ref, supplier_name, godown_id, invoice_date, supplier_gstin, reviewed_lines)
@@ -186,7 +206,7 @@ export async function saveInventoryImport(body, database = pool, actorId = null)
         VALUES ($1,$2,'LOAD_IN',$3,$4,$5,$6,'INVENTORY_IMPORT',$7)`,
         [`led_${crypto.randomUUID()}`, Date.now(), line.product_id, line.quantity_pieces, godownId, id, `Import Ref: ${importRef}`]);
     }
-    await logAudit(client, 'INVENTORY_IMPORT', id, { actor_id: actorId, import_ref: importRef, supplier_name: supplier, godown_id: godownId, invoice_date: invoiceDate, lines });
+    await logAudit(client, 'INVENTORY_IMPORT', id, { actor_id: actorId, import_ref: importRef, supplier_name: supplier, godown_id: godownId, invoice_date: invoiceDate, invoice_total_paise: invoiceTotal, discrepancies, review_acknowledged: body.review_acknowledged === true, lines });
     await client.query('COMMIT');
     return { success: true, id };
   } catch (error) {
@@ -199,16 +219,16 @@ export async function saveInventoryImport(body, database = pool, actorId = null)
 app.post('/api/v2/admin/inventory/import', async (req, res) => {
   try { res.json(await saveInventoryImport(req.body, pool, req.user.id)); }
   catch (error) {
-    res.status(error.status || 503).json({ success: false, code: error.code === 'DUPLICATE_INVOICE' ? error.code : 'IMPORT_FAILED', error: error instanceof ImportError ? error.message : 'Inventory could not be saved. No partial import was committed. Please retry.' });
+    res.status(error.status || 503).json({ success: false, code: error instanceof ImportError ? error.code : 'DATABASE_FAILED', error: error instanceof ImportError ? error.message : 'Inventory could not be saved. No partial import was committed. Please retry.' });
   }
 });
 
 export async function extractInvoicePdf(fileBase64) {
-  if (typeof fileBase64 !== 'string' || fileBase64.length > 28 * 1024 * 1024) throw new ImportError('Select a PDF no larger than 20 MB.');
+  if (typeof fileBase64 !== 'string' || fileBase64.length > 28 * 1024 * 1024) throw new ImportError('Select a PDF no larger than 20 MB.', 400, 'PDF_TOO_LARGE');
   const encoded = fileBase64.replace(/^data:application\/pdf;base64,/i, '');
-  if (!encoded || encoded.length % 4 || !/^[A-Za-z0-9+/]*={0,2}$/.test(encoded)) throw new ImportError('Invalid PDF upload.');
+  if (!encoded || encoded.length % 4 || !/^[A-Za-z0-9+/]*={0,2}$/.test(encoded)) throw new ImportError('Invalid PDF upload.', 400, 'INVALID_PDF');
   const buffer = Buffer.from(encoded, 'base64');
-  if (buffer.length > 20 * 1024 * 1024 || !buffer.subarray(0, 1024).toString('latin1').trimStart().startsWith('%PDF-')) throw new ImportError('Please select a valid PDF file no larger than 20 MB.');
+  if (buffer.length > 20 * 1024 * 1024 || !buffer.subarray(0, 1024).toString('latin1').trimStart().startsWith('%PDF-')) throw new ImportError('Please select a valid PDF file no larger than 20 MB.', 400, 'INVALID_PDF');
   const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'invoice-'));
   const tmpPath = path.join(tmpDir, 'invoice.pdf');
   try {
@@ -216,18 +236,21 @@ export async function extractInvoicePdf(fileBase64) {
     const pyScript = path.join(backendDir, 'invoice_extraction', 'extractor.py');
     const pyBin = process.env.INVOICE_PYTHON || path.join(backendDir, 'invoice_extraction', 'venv', 'bin', 'python');
     return await new Promise((resolve, reject) => {
-      const child = spawn(pyBin, ['-B', pyScript, tmpPath], { cwd: backendDir });
+      const child = spawn(pyBin, ['-B', pyScript, tmpPath], { cwd: backendDir, detached: process.platform !== 'win32' });
       let stdout = '', settled = false;
+      const terminate = () => {
+        try { if (process.platform !== 'win32' && child.pid) process.kill(-child.pid, 'SIGKILL'); else child.kill('SIGKILL'); } catch { /* Already exited. */ }
+      };
       const finish = (error, value) => {
         if (settled) return;
         settled = true; clearTimeout(timer);
         if (error) reject(error); else resolve(value);
       };
-      const timer = setTimeout(() => { child.kill('SIGKILL'); finish(new ImportError('Local PDF extraction timed out. Try a smaller PDF.', 504)); }, 45000);
-      child.on('error', () => finish(new ImportError('Local PDF extractor is unavailable. Check the Python environment.', 503)));
+      const timer = setTimeout(() => { terminate(); finish(new ImportError('Local PDF extraction timed out. Try fewer pages or a clearer scan.', 504, 'PROCESSING_TIMEOUT')); }, 45000);
+      child.on('error', () => finish(new ImportError('Local PDF extractor is unavailable. Check the Python environment.', 503, 'EXTRACTOR_UNAVAILABLE')));
       child.stdout.on('data', data => {
         stdout += data.toString();
-        if (stdout.length > 5 * 1024 * 1024) { child.kill('SIGKILL'); finish(new ImportError('Extracted invoice exceeds the supported size.', 422)); }
+        if (stdout.length > 5 * 1024 * 1024) { terminate(); finish(new ImportError('Extracted invoice exceeds the supported size.', 422, 'PDF_TOO_LARGE')); }
       });
       child.stderr.resume();
       child.on('close', code => {
@@ -237,7 +260,7 @@ export async function extractInvoicePdf(fileBase64) {
           const data = JSON.parse(stdout.trim());
           if (typeof data.success !== 'boolean') throw new Error();
           finish(null, data);
-        } catch { finish(new ImportError('Local PDF extraction failed. Check the extraction dependencies.', 503)); }
+        } catch { finish(new ImportError('Local PDF extraction failed. Check the extraction dependencies.', 503, 'EXTRACTION_FAILED')); }
       });
     });
   } finally { await fs.promises.rm(tmpDir, { recursive: true, force: true }); }
@@ -245,17 +268,30 @@ export async function extractInvoicePdf(fileBase64) {
 
 let activeExtractions = 0;
 app.post('/api/v2/admin/extract-invoice', async (req, res) => {
+  const started = Date.now();
+  let stage = 'extraction';
   try {
-    if (activeExtractions >= 2) return res.status(429).json({ success: false, error: 'Two invoices are being processed. Please retry shortly.' });
+    if (activeExtractions >= 2) return res.status(429).json({ success: false, code: 'EXTRACTION_BUSY', error: 'Two invoices are being processed. Please retry shortly.' });
     activeExtractions++;
     let data;
     try { data = await extractInvoicePdf(req.body?.fileBase64); } finally { activeExtractions--; }
-    if (!data.success) return res.status(422).json(data);
-    const { rows: products } = await pool.query('SELECT * FROM products WHERE active = TRUE');
+    if (!data.success) {
+      console.warn('invoice_import', { stage, code: data.code, duration_ms: Date.now() - started });
+      return res.status(/TIMEOUT/.test(data.code || '') ? 504 : 422).json(data);
+    }
+    stage = 'database';
+    const matchStarted = Date.now();
+    const { rows: products } = data.items.length ? await pool.query('SELECT id,name,sku,barcode,hsn,uom,active FROM products WHERE active = TRUE') : { rows: [] };
+    const databaseMs = Date.now() - matchStarted;
+    stage = 'matching';
     data.items = data.items.map(item => matchInvoiceItem(item, products));
+    data.diagnostics = { ...data.diagnostics, database_ms: databaseMs, matching_ms: Date.now() - matchStarted - databaseMs, request_ms: Date.now() - started };
+    console.info('invoice_import', { stage: 'complete', ...data.diagnostics });
     res.json(data);
   } catch (error) {
-    res.status(error.status || 503).json({ success: false, error: error instanceof ImportError ? error.message : 'Product matching is unavailable. Check the database connection and retry.' });
+    const code = error instanceof ImportError ? error.code : stage === 'database' ? 'DATABASE_FAILED' : 'PRODUCT_MATCHING_FAILED';
+    console.warn('invoice_import', { stage, code, duration_ms: Date.now() - started });
+    res.status(error.status || 503).json({ success: false, code, error: error instanceof ImportError ? error.message : stage === 'database' ? 'Products could not be loaded. Check the database connection and retry.' : 'Product matching failed. Retry or contact the administrator.' });
   }
 });
 

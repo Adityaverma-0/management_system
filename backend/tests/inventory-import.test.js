@@ -7,6 +7,8 @@ const test = process.env.VITEST
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
+import os from 'node:os';
+import path from 'node:path';
 import pg from 'pg';
 process.env.NODE_ENV = 'test';
 const { app, pool, matchInvoiceItem, saveInventoryImport, extractInvoicePdf } = await import('../index.js');
@@ -87,6 +89,37 @@ test('HTTP extraction only reads products and never writes stock', async () => {
   } finally { pool.query = originalQuery; await new Promise(resolve => server.close(resolve)); }
 });
 
+test('oversized extractor output terminates its OCR descendant as well as Python', { skip: process.platform === 'win32' }, async () => {
+  const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'extractor-cancel-test-'));
+  const script = path.join(folder, 'fake-python');
+  const pidFile = path.join(folder, 'child-pid');
+  const previous = process.env.INVOICE_PYTHON;
+  let pid;
+  fs.writeFileSync(script, `#!/usr/bin/env python3
+import subprocess, sys, time
+child = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)'])
+open(${JSON.stringify(pidFile)}, 'w').write(str(child.pid))
+sys.stdout.write('x' * 6000000)
+sys.stdout.flush()
+time.sleep(60)
+`, { mode: 0o700 });
+  process.env.INVOICE_PYTHON = script;
+  try {
+    await assert.rejects(extractInvoicePdf(Buffer.from('%PDF-1.4\n').toString('base64')), error => error.code === 'PDF_TOO_LARGE');
+    pid = Number(fs.readFileSync(pidFile, 'utf8'));
+    let alive = true;
+    for (let i = 0; i < 30 && alive; i++) {
+      try { process.kill(pid, 0); await new Promise(resolve => setTimeout(resolve, 50)); }
+      catch (error) { if (error.code === 'ESRCH') alive = false; else throw error; }
+    }
+    assert.equal(alive, false, 'OCR child survived extractor cancellation');
+  } finally {
+    if (pid) { try { process.kill(pid, 'SIGKILL'); } catch { /* Already reaped. */ } }
+    if (previous === undefined) delete process.env.INVOICE_PYTHON; else process.env.INVOICE_PYTHON = previous;
+    fs.rmSync(folder, { recursive: true, force: true });
+  }
+});
+
 test('PostgreSQL integration: atomic stock, duplicate race, rollback, metadata, receipt separation', { skip: !process.env.TEST_DATABASE_URL }, async () => {
   // A unique disposable schema: never insert fixtures into public business tables.
   const schema = `invoice_test_${crypto.randomBytes(8).toString('hex')}`;
@@ -134,4 +167,29 @@ test('PostgreSQL integration: atomic stock, duplicate race, rollback, metadata, 
     await admin.query(`DROP SCHEMA IF EXISTS ${schema} CASCADE`);
     await admin.end();
   }
+});
+
+test('tax metadata is preserved and mismatched invoice totals require review before writes', async () => {
+  const queries = [];
+  const database = { connect: async () => ({
+    query: async (sql, params) => {
+      queries.push({ sql, params });
+      if (sql.includes('SELECT id FROM godowns')) return { rows: [{ id: 'g1' }] };
+      if (sql.includes('SELECT * FROM products')) return { rows: [product] };
+      return { rows: [] };
+    }, release: () => {}
+  }) };
+  const body = invoice({ invoice_total: '250', lines: [{ product_id: 'p1', quantity: '2', unit: 'PIECE', unit_price: '100', discount: '5', discount_type: 'PERCENT', discount_amount: '10', taxable_amount: '190', cgst: '9.50', sgst: '9.50', line_total: '209' }] });
+  await assert.rejects(saveInventoryImport(body, database), error => error.code === 'TOTAL_MISMATCH');
+  assert(!queries.some(q => q.sql.includes('INSERT')));
+  assert.equal(queries.at(-1).sql, 'ROLLBACK');
+  await saveInventoryImport({ ...body, review_acknowledged: true }, database);
+  const saved = JSON.parse(queries.find(q => q.sql.includes('INSERT INTO inventory_imports')).params[7])[0];
+  assert.equal(saved.taxable_amount_paise, 19000);
+  assert.equal(saved.cgst_paise, 950);
+  assert.equal(saved.sgst_paise, 950);
+  assert.equal(saved.igst_paise, null);
+  assert.equal(saved.printed_discount_paise, 1000);
+  assert.equal(saved.discount, 5);
+  assert.equal(saved.line_total_paise, 20900);
 });

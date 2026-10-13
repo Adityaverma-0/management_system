@@ -115,6 +115,28 @@ class OCRTests(unittest.TestCase):
         self.assertEqual(result['items'][0]['unit_price'], 10)
         self.assertTrue(any('local OCR' in warning for warning in result['warnings']))
 
+    @unittest.skipUnless(os.environ.get('INVOICE_TEST_CURVED_SCAN'), 'optional private curved regression scan')
+    def test_curved_purchase_invoice(self):
+        result = extract_invoice(os.environ['INVOICE_TEST_CURVED_SCAN'])
+        self.assertEqual(len(result['items']), 37)
+        first, last = result['items'][0], result['items'][-1]
+        self.assertIn('Chinese Pasta', first['description'])
+        self.assertEqual(first['quantity'], 20)
+        self.assertEqual(first['unit'], 'BOX')
+        self.assertEqual(first['unit_price'], 256.99)
+        self.assertEqual(first['discount_amount'], 152.5)
+        self.assertEqual(first['line_total'], 4987.3)
+        self.assertIsNone(first['gst'])
+        self.assertIn('Masala Sev Mamra', last['description'])
+        self.assertEqual(last['quantity'], 10)
+        self.assertEqual(last['unit'], 'BAGS')
+        self.assertEqual(last['line_total'], 5989.91)
+        self.assertIsNone(result['items'][14]['quantity']) # OCR's 16 conflicts with printed amounts.
+        self.assertIsNone(result['items'][29]['line_total']) # OCR's 41,988.07 conflicts with quantity/rate.
+        self.assertIsNone(result['amount'])
+        self.assertTrue(any('continuation' in warning for warning in result['warnings']))
+        self.assertLess(result['diagnostics']['total_ms'], 35000)
+
     @unittest.skipUnless(os.environ.get('INVOICE_TEST_SCAN'), 'optional private regression scan')
     def test_reported_invoice(self):
         result = extract_invoice(os.environ['INVOICE_TEST_SCAN'])

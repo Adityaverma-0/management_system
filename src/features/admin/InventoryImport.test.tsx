@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import InventoryImport from './InventoryImport';
@@ -96,4 +97,39 @@ describe('inventory import preview', () => {
     expect(screen.queryByLabelText('Product 1')).toBeNull();
     expect(saveCalls()).toHaveLength(0);
   });
+});
+
+it('distinguishes a non-JSON gateway timeout and never writes inventory', async () => {
+  const original = fetchApi.getMockImplementation()!;
+  fetchApi.mockImplementation((url: string) => url.endsWith('/extract-invoice') ? Promise.resolve(new Response('<html>Gateway timeout</html>', { status: 504 })) : original(url));
+  render(<InventoryImport />); selectFile();
+  fireEvent.click(screen.getByRole('button', { name: 'Extract PDF' }));
+  expect((await screen.findByRole('alert')).textContent).toContain('server or gateway timed out');
+  expect(saveCalls()).toHaveLength(0);
+});
+
+it('previews separate tax and discount amounts and flags invoice total differences', async () => {
+  const original = fetchApi.getMockImplementation()!;
+  fetchApi.mockImplementation((url: string) => url.endsWith('/extract-invoice') ? Promise.resolve(response({ ...extracted(), amount: 250, items: [{ ...extracted().items[0], unit: 'BAGS', unit_price: 100, quantity: 2, discount: 5, discount_type: 'PERCENT', discount_amount: 10, taxable_amount: 190, cgst: 9.5, sgst: 9.5, line_total: 209 }] })) : original(url));
+  render(<InventoryImport />); await extract();
+  expect((screen.getByLabelText('Taxable amount (₹) 1') as HTMLInputElement).value).toBe('190');
+  expect((screen.getByLabelText('Printed discount amount (₹) 1') as HTMLInputElement).value).toBe('10');
+  expect((screen.getByLabelText('CGST (₹) 1') as HTMLInputElement).value).toBe('9.5');
+  expect((screen.getByLabelText('IGST (₹) 1') as HTMLInputElement).value).toBe('');
+  expect((screen.getByLabelText('UOM 1') as HTMLSelectElement).value).toBe('BAGS');
+  expect(screen.getByRole('alert').textContent).toContain('Invoice total differs');
+  expect(saveCalls()).toHaveLength(0);
+});
+
+it.skipIf(!process.env.INVOICE_PREVIEW_FIXTURE)('displays all 37 rows extracted from the private scan without saving', async () => {
+  const { readFileSync } = await import('node:fs');
+  const data = JSON.parse(readFileSync(process.env.INVOICE_PREVIEW_FIXTURE!, 'utf8'));
+  const original = fetchApi.getMockImplementation()!;
+  fetchApi.mockImplementation((url: string) => url.endsWith('/extract-invoice') ? Promise.resolve(response(data)) : original(url));
+  render(<InventoryImport />); await extract();
+  expect(screen.getAllByLabelText(/^Product \d+$/)).toHaveLength(37);
+  expect(screen.getByText(/Chinese Pasta/)).toBeTruthy();
+  expect(screen.getByText(/Masala Sev Mamra/)).toBeTruthy();
+  expect((screen.getByLabelText('Purchase price (₹) 1') as HTMLInputElement).value).toBe('256.99');
+  expect(saveCalls()).toHaveLength(0);
 });

@@ -7,12 +7,18 @@ type Product = { id: string; name: string; active?: boolean };
 type Godown = { id: string; name: string; location_name?: string; active?: boolean };
 type Line = {
   product_id: string; description: string; quantity: string; unit: string; unit_price: string;
+  taxable_amount: string; cgst: string; sgst: string; igst: string; discount_amount: string;
   gst: string; hsn: string; sku: string; barcode: string; line_total: string; discount: string; discount_type: string;
   match_status: 'MATCHED' | 'NEEDS_REVIEW' | 'NEW_PRODUCT'; match_reason: string;
   candidates: { id: string; name: string }[];
 };
-const emptyLine = (): Line => ({ product_id: '', description: '', quantity: '', unit: '', unit_price: '', gst: '', hsn: '', sku: '', barcode: '', line_total: '', discount: '', discount_type: '', match_status: 'NEW_PRODUCT', match_reason: '', candidates: [] });
+const emptyLine = (): Line => ({ product_id: '', description: '', quantity: '', unit: '', unit_price: '', taxable_amount: '', cgst: '', sgst: '', igst: '', discount_amount: '', gst: '', hsn: '', sku: '', barcode: '', line_total: '', discount: '', discount_type: '', match_status: 'NEW_PRODUCT', match_reason: '', candidates: [] });
 const message = (e: unknown) => e instanceof Error ? e.message : 'The request failed. Please retry.';
+
+async function importResponse(response: Response) {
+  try { return await response.json(); }
+  catch { throw new Error([502, 504].includes(response.status) ? 'The server or gateway timed out. Retry with fewer pages; ask the administrator to check invoice stage timings if this continues.' : 'The server returned an unreadable response. Please retry or contact the administrator.'); }
+}
 
 export default function InventoryImport() {
   const fetchApi = useApi({ backendOnly: true });
@@ -31,6 +37,8 @@ export default function InventoryImport() {
   const [isExtracting, setIsExtracting] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState('');
+  const [invoiceTotal, setInvoiceTotal] = useState('');
+  const [reviewAcknowledged, setReviewAcknowledged] = useState(false);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [previewReady, setPreviewReady] = useState(false);
   const [lines, setLines] = useState<Line[]>([]);
@@ -51,10 +59,10 @@ export default function InventoryImport() {
 
   const resetPreview = () => {
     setLines([]); setImportRef(''); setSupplierName(''); setInvoiceDate(''); setSupplierGstin('');
-    setWarnings([]); setPreviewReady(false); setError(''); setSuccess('');
+    setInvoiceTotal(''); setReviewAcknowledged(false); setWarnings([]); setPreviewReady(false); setError(''); setSuccess('');
   };
   const updateLine = (index: number, field: keyof Line, value: string) => {
-    setSuccess('');
+    setSuccess(''); setReviewAcknowledged(false);
     setLines(current => current.map((line, i) => i !== index ? line : {
       ...line, [field]: value,
       ...(field === 'product_id' ? { match_status: value ? 'MATCHED' as const : 'NEEDS_REVIEW' as const, match_reason: value ? 'Selected by you' : '' } : {}),
@@ -76,14 +84,15 @@ export default function InventoryImport() {
       const response = await fetchApi(`${API_URL}/admin/extract-invoice`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fileBase64: base64 }),
       });
-      const data = await response.json();
+      const data = await importResponse(response);
       if (!response.ok || !data.success || !Array.isArray(data.items)) throw new Error(data.error || 'Failed to extract invoice data.');
       setImportRef(data.invoice_number ?? ''); setSupplierName(data.supplier ?? '');
+      setInvoiceTotal(data.amount === null || data.amount === undefined ? '' : String(data.amount));
       setInvoiceDate(data.invoice_date ?? ''); setSupplierGstin(data.supplier_gstin ?? '');
       setWarnings(Array.isArray(data.warnings) ? data.warnings : []);
       setLines(data.items.map((item: Record<string, unknown>) => {
         const line = emptyLine();
-        for (const key of ['product_id', 'description', 'quantity', 'unit', 'unit_price', 'gst', 'hsn', 'sku', 'barcode', 'line_total', 'discount', 'discount_type', 'match_reason'] as const) {
+        for (const key of ['product_id', 'description', 'quantity', 'unit', 'unit_price', 'gst', 'hsn', 'sku', 'barcode', 'line_total', 'discount', 'discount_type', 'taxable_amount', 'cgst', 'sgst', 'igst', 'discount_amount', 'match_reason'] as const) {
           line[key] = item[key] === null || item[key] === undefined ? '' : String(item[key]);
         }
         line.match_status = ['MATCHED', 'NEEDS_REVIEW', 'NEW_PRODUCT'].includes(String(item.match_status)) ? item.match_status as Line['match_status'] : 'NEEDS_REVIEW';
@@ -111,9 +120,9 @@ export default function InventoryImport() {
     try {
       const response = await fetchApi(`${API_URL}/admin/inventory/import`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ import_ref: importRef, supplier_name: supplierName, invoice_date: invoiceDate || null, supplier_gstin: supplierGstin || null, godown_id: selectedGodown, lines }),
+        body: JSON.stringify({ import_ref: importRef, supplier_name: supplierName, invoice_date: invoiceDate || null, supplier_gstin: supplierGstin || null, godown_id: selectedGodown, invoice_total: invoiceTotal, review_acknowledged: reviewAcknowledged, lines }),
       });
-      const data = await response.json();
+      const data = await importResponse(response);
       if (!response.ok || !data.success) throw new Error(data.error || 'Inventory could not be saved.');
       resetPreview(); setFile(null);
       if (fileInput.current) fileInput.current.value = '';
@@ -144,6 +153,7 @@ export default function InventoryImport() {
           <label className="text-sm">Supplier<input className={inputClass} value={supplierName} onChange={e => setSupplierName(e.target.value)} maxLength={255} /></label>
           <label className="text-sm">Receiving Godown<select className={inputClass} value={selectedGodown} onChange={e => setSelectedGodown(e.target.value)}><option value="">Select an active godown</option>{godowns.map(g => <option key={g.id} value={g.id}>{g.name} - {g.location_name}</option>)}</select></label>
           <label className="text-sm">Invoice date<input type="date" className={inputClass} value={invoiceDate} onChange={e => setInvoiceDate(e.target.value)} /></label>
+          <label className="text-sm">Invoice total (₹)<input type="number" min="0" step="0.01" className={inputClass} value={invoiceTotal} onChange={e => { setInvoiceTotal(e.target.value); setReviewAcknowledged(false); }} /></label>
           <label className="text-sm">Supplier GSTIN<input className={inputClass} value={supplierGstin} onChange={e => setSupplierGstin(e.target.value.toUpperCase())} maxLength={15} /></label>
         </div>
         <div className="text-sm flex gap-3 flex-wrap">
@@ -164,9 +174,9 @@ export default function InventoryImport() {
                 <label className="text-sm col-span-2">Product {idx + 1}<select className={inputClass} value={line.product_id} onChange={e => updateLine(idx, 'product_id', e.target.value)}><option value="">Map to Product...</option>{products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
                 <label className="text-sm">Quantity {idx + 1}<input type="number" min="0" step="any" className={inputClass} value={line.quantity} onChange={e => updateLine(idx, 'quantity', e.target.value)} /></label>
                 <label className="text-sm">UOM {idx + 1}<select className={inputClass} value={line.unit} onChange={e => updateLine(idx, 'unit', e.target.value)}><option value="">Confirm unit...</option>{line.unit && !['BOX', 'STRIP', 'PIECE'].includes(line.unit) && <option value={line.unit}>{line.unit} — confirm conversion</option>}<option>BOX</option><option>STRIP</option><option>PIECE</option></select></label>
-                {(['unit_price', 'gst', 'hsn', 'sku', 'barcode', 'line_total', 'discount'] as const).map(field => {
-                  const labels = { unit_price: 'Purchase price (₹)', gst: 'GST (%)', hsn: 'HSN', sku: 'SKU', barcode: 'Barcode', line_total: 'Line total (₹)', discount: 'Discount' };
-                  const numeric = ['unit_price', 'gst', 'line_total', 'discount'].includes(field);
+                {(['unit_price', 'gst', 'hsn', 'sku', 'barcode', 'line_total', 'discount', 'discount_amount', 'taxable_amount', 'cgst', 'sgst', 'igst'] as const).map(field => {
+                  const labels = { unit_price: 'Purchase price (₹)', gst: 'GST (%)', hsn: 'HSN', sku: 'SKU', barcode: 'Barcode', line_total: 'Line total (₹)', discount: 'Discount', discount_amount: 'Printed discount amount (₹)', taxable_amount: 'Taxable amount (₹)', cgst: 'CGST (₹)', sgst: 'SGST (₹)', igst: 'IGST (₹)' };
+                  const numeric = ['unit_price', 'gst', 'line_total', 'discount', 'discount_amount', 'taxable_amount', 'cgst', 'sgst', 'igst'].includes(field);
                   return <label key={field} className="text-sm">{labels[field]} {idx + 1}<input type={numeric ? 'number' : 'text'} min={numeric ? '0' : undefined} step={numeric ? '0.01' : undefined} className={inputClass} value={line[field]} onChange={e => updateLine(idx, field, e.target.value)} /></label>;
                 })}
                 <label className="text-sm">Discount type {idx + 1}<select className={inputClass} value={line.discount_type} onChange={e => updateLine(idx, 'discount_type', e.target.value)}><option value="">Select if applicable</option><option value="PERCENT">Percent</option><option value="AMOUNT">Amount (₹)</option></select></label>
@@ -179,6 +189,8 @@ export default function InventoryImport() {
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 space-y-2">
         <h3 className="font-bold">3. Save to Inventory</h3>
         <p className="text-xs text-gray-500">Review quantities, units and purchase prices before saving to the receiving godown.</p>
+        {invoiceTotal && lines.length > 0 && lines.every(line => line.line_total !== '') && Math.abs(lines.reduce((sum, line) => sum + Math.round(Number(line.line_total) * 100), 0) - Math.round(Number(invoiceTotal) * 100)) > 1 && <p role="alert" className="text-amber-700">Invoice total differs from the sum of line totals. Check missing pages, tax, freight and rounding.</p>}
+        {previewReady && <label className="flex gap-2 text-sm"><input type="checkbox" checked={reviewAcknowledged} onChange={e => setReviewAcknowledged(e.target.checked)} />I checked all invoice pages, units and any total discrepancies against the PDF.</label>}
         <button onClick={handleSubmit} disabled={busy || !previewReady || !lines.length || !!masterError} className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded px-4 py-3 font-bold w-full sm:w-auto">{isSubmitting ? 'Saving...' : 'Save to Inventory'}</button>
       </div>
     </div>

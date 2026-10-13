@@ -1,3 +1,4 @@
+import SalesAnalytics from './SalesAnalytics';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchActiveWorkDay, updateDayState, devResetDay, getAccountingEntries, getLedger } from '../data/mockApi';
@@ -203,6 +204,8 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      <SalesAnalytics />
 
       <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
         <h3 className="font-bold text-lg mb-3">Today's Accounts</h3>

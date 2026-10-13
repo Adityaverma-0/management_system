@@ -36,6 +36,23 @@ def pdf_file(path, lines=(), image=False):
 
 
 class ExtractionTests(unittest.TestCase):
+    def test_tax_and_discount_columns_remain_distinct(self):
+        rows = fallback_parse('Description  Qty  Unit price  Discount %  Discount amount  Taxable amount  CGST  SGST  IGST  Line total\nPens  2  100  5  10  190  9.50  9.50  -  209')['items']
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]['discount'], 5)
+        self.assertEqual(rows[0]['discount_type'], 'PERCENT')
+        self.assertEqual(rows[0]['discount_amount'], 10)
+        self.assertEqual(rows[0]['taxable_amount'], 190)
+        self.assertEqual(rows[0]['cgst'], 9.5)
+        self.assertIsNone(rows[0]['igst'])
+        self.assertIsNone(rows[0]['gst'])
+
+    def test_component_tax_rates_are_not_rupee_amounts(self):
+        result = fallback_parse('Description  Qty  Rate  CGST %  SGST %  Amount\nPens  2  100  9  9  236')
+        self.assertIsNone(result['items'][0]['cgst'])
+        self.assertIsNone(result['items'][0]['sgst'])
+        self.assertTrue(result['warnings'])
+
     def test_existing_coordinate_table(self):
         result = extract_invoice(str(Path(__file__).parents[2] / 'ideal_invoice.pdf'))
         self.assertEqual(len(result['items']), 10)

@@ -108,3 +108,14 @@ export async function getAllWorkDays() { await refreshData(); return (await getD
 export async function saveCashDraft(id: string,breakdown: Record<string,number>) { await (await getDB()).put('drafts',breakdown,`cash_draft_${id}`); }
 export async function getCashDraft(id: string): Promise<Record<string,number>|undefined> { return (await getDB()).get('drafts',`cash_draft_${id}`); }
 export async function clearCashDraft(id: string) { await (await getDB()).delete('drafts',`cash_draft_${id}`); }
+
+export interface SalesAnalyticsData {
+  from: string; to: string; period: string;
+  series: { date: string; amountPaise: number; bills: number }[];
+  payments: Record<'CASH'|'UPI'|'CREDIT', number>;
+  statuses: Record<'VALID'|'VOID', number>;
+  totalAmountPaise: number; totalBills: number;
+}
+export function getSalesAnalytics(from: string, to: string, period: string): Promise<SalesAnalyticsData> {
+  return request(`/salesman/analytics?${new URLSearchParams({from,to,period})}`);
+}

@@ -240,6 +240,40 @@ export function installOperations(app,pool) {
     const id=uid();await ledger(c,minus?'ADJ_MINUS':'ADJ_PLUS',product_id,i.quantityPieces,godown_id,id,null,text(reason,'Reason'));
     await audit(c,'STOCK_ADJUSTMENT',id,{godown_id,product_id,quantity_pieces: i.quantityPieces,kind});return {id,success:true};
   })));
+  app.get('/api/v2/salesman/analytics',endpoint(async req=>{
+    if(req.user.role!=='salesman')throw new ApiError('Salesman access required.',403);
+    const end=req.query.to || dateString();
+    const validDate=value=>typeof value==='string' && /^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0,10)===value;
+    if(!validDate(end))throw new ApiError('Choose a valid end date.');
+    const start=req.query.from || new Date(Date.parse(end)-29*86400000).toISOString().slice(0,10);
+    const period=req.query.period || 'day';
+    if(!validDate(start) || start>end || (Date.parse(end)-Date.parse(start))/86400000>365)throw new ApiError('Choose a date range of at most 366 days.');
+    if(!['day','week','month'].includes(period))throw new ApiError('Invalid chart interval.');
+    const bucket=date=>{
+      if(period==='month')return date.slice(0,7)+'-01';
+      if(period==='week'){const d=new Date(date);d.setUTCDate(d.getUTCDate()-((d.getUTCDay()+6)%7));return d.toISOString().slice(0,10);}
+      return date;
+    };
+    const series=new Map();
+    for(let t=Date.parse(start);t<=Date.parse(end);t+=86400000){const key=bucket(new Date(t).toISOString().slice(0,10));series.set(key,{date:key,amountPaise:0,bills:0});}
+    // Bounded aggregate only. A caller-supplied salesman ID is never used.
+    const {rows}=await pool.query(`SELECT calendar_date,status,payment_mode,COUNT(*)::integer AS bills,COALESCE(SUM(total_amount_paise),0)::text AS amount
+      FROM invoices WHERE salesman_id=$1 AND calendar_date BETWEEN $2::date AND $3::date
+      GROUP BY calendar_date,status,payment_mode ORDER BY calendar_date`,[req.user.id,start,end]);
+    const payments={CASH:0,UPI:0,CREDIT:0},statuses={VALID:0,VOID:0};
+    let totalAmountPaise=0,totalBills=0;
+    for(const row of rows){
+      const bills=number(row.bills),amount=number(row.amount);
+      if(row.status in statuses)statuses[row.status]+=bills;
+      if(row.status!=='VALID')continue;
+      const point=series.get(bucket(dateString(row.calendar_date)));
+      if(point){point.amountPaise+=amount;point.bills+=bills;}
+      if(row.payment_mode in payments)payments[row.payment_mode]+=amount;
+      totalAmountPaise+=amount;totalBills+=bills;
+    }
+    if(!Number.isSafeInteger(totalAmountPaise))throw new ApiError('Sales total exceeds the supported reporting range.',422);
+    return {from:start,to:end,period,series:[...series.values()],payments,statuses,totalAmountPaise,totalBills};
+  }));
   app.get('/api/v2/salesman/snapshot',endpoint(req=>transaction(pool,async c=>{await c.query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY');return snapshot(c,req.user);}))); 
   app.post('/api/v2/salesman/work-days',endpoint(req=>operation(pool,req,'start-day',async c=>{
     const person=(await c.query('SELECT * FROM salesmen WHERE id=$1 FOR UPDATE',[req.user.id])).rows[0];

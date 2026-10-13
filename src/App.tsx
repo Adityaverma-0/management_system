@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, NavLink } from 'react-router-dom';
 import { AuthProvider, useAuth } from './features/auth/AuthContext';
-import { CheckCircle, List, Warehouse, Truck, Package, Users, FileUp, Database , TrendingUp} from 'lucide-react';
+import { CheckCircle, Warehouse, Truck, Package, Users, FileUp, Database , TrendingUp} from 'lucide-react';
 
 import Login from './features/auth/Login';
 import ApprovalDashboard from './features/admin/ApprovalDashboard';
@@ -51,7 +51,6 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
           <nav className="p-4 flex flex-wrap md:block md:space-y-2">
             <NavLink to="/" className={navClass}><CheckCircle size={18} /> Unload Approvals</NavLink>
             <NavLink to="/stock-approvals" className={navClass}><Package size={18} /> Stock Approvals</NavLink>
-            <NavLink to="/audit" className={navClass}><List size={18} /> Audit Log</NavLink>
             <NavLink to="/godowns" className={navClass}><Warehouse size={18} /> Godowns</NavLink>
             <NavLink to="/vehicles" className={navClass}><Truck size={18} /> Vehicles</NavLink>
             <NavLink to="/products" className={navClass}><Package size={18} /> Products</NavLink>

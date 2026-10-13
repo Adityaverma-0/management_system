@@ -37,6 +37,7 @@ def local_text(pdf_path):
         if not document.read(1024).lstrip().startswith(b'%PDF-'):
             raise ExtractionError('INVALID_PDF', 'Please select a valid PDF file.')
     pages, ocr_pages = [], 0
+    started, ocr_seconds = time.monotonic(), 0
     deadline = time.monotonic() + 35
     try:
         for page_index, page in enumerate(extract_pages(pdf_path)):
@@ -69,7 +70,9 @@ def local_text(pdf_path):
                 if ocr_pages > 10:
                     raise ExtractionError('PDF_TOO_LARGE', 'Please split scanned PDFs into files of at most 10 pages.')
                 try:
+                    ocr_started = time.monotonic()
                     heading, table = page_text(pdf_path, page_index, deadline=deadline)
+                    ocr_seconds += time.monotonic() - ocr_started
                     text = heading + ('\n' + ocr_table_text(table) if table else '')
                 except OCRError as exc:
                     raise ExtractionError(exc.code, str(exc)) from exc
@@ -84,6 +87,7 @@ def local_text(pdf_path):
         raise ExtractionError('CORRUPT_PDF', 'This PDF has no readable pages.')
     text = ExtractedText('\n\f\n'.join(pages))
     text.ocr_used = ocr_pages > 0
+    text.diagnostics = {'pages': len(pages), 'ocr_pages': ocr_pages, 'ocr_ms': round(ocr_seconds * 1000), 'pdf_text_ms': round((time.monotonic() - started - ocr_seconds) * 1000)}
     if not text.strip():
         raise ExtractionError('NO_TEXT', 'No readable text was detected. Try a clearer scan or a digital PDF.')
     return text
@@ -147,7 +151,7 @@ def metadata(text):
 
 
 HEADERS = {
-    'description': ('item name', 'item description', 'goods description', 'product description', 'description', 'particulars', 'product name', 'product', 'item'),
+    'description': ('item name', 'item description', 'goods description', 'description of goods', 'product description', 'description', 'particulars', 'product name', 'product', 'item'),
     'quantity': ('quantity', 'qty'),
     'unit': ('uom', 'unit', 'units'),
     'unit_price': ('purchase price', 'unit price', 'price/ unit', 'price/unit', 'unit rate', 'rate', 'price'),
@@ -156,6 +160,14 @@ HEADERS = {
     'barcode': ('barcode', 'ean'),
     'hsn': ('hsn/sac', 'hsn/ sac', 'hsn / sac', 'hsn code', 'hsn', 'sac'),
     'gst': ('gst %', 'gst%', 'gst rate', 'gst'),
+    'discount_amount': ('discount amount', 'disc amount'),
+    'taxable_amount': ('taxable amount', 'taxable value'),
+    'cgst_rate': ('cgst %', 'cgst%', 'cgst rate'),
+    'sgst_rate': ('sgst %', 'sgst%', 'sgst rate'),
+    'igst_rate': ('igst %', 'igst%', 'igst rate'),
+    'cgst': ('cgst amount', 'cgst'),
+    'sgst': ('sgst amount', 'sgst'),
+    'igst': ('igst amount', 'igst'),
     'discount': ('discount %', 'discount%', 'discount', 'disc %', 'disc.'),
     'serial': ('sr no.', 'sr no', 's.no.', 's.no', 'sl no', 'no.', '#'),
 }
@@ -193,7 +205,7 @@ def ocr_table_text(table):
     header = '  '.join(('GST' if field == 'gst' else 'Discount') + ('%' if '%' in table[0][i] else '') if field in ('gst', 'discount') else HEADERS[field][0] for i, field in selected)
     rows = [list(row) for row in table[1:]]
     for i, field in selected:
-        if field in ('unit_price', 'line_total', 'discount'):
+        if field in ('unit_price', 'line_total', 'discount_amount', 'taxable_amount', 'cgst', 'sgst', 'igst') or (field == 'discount' and '%' not in table[0][i]):
             decimal_column = sum(bool(re.fullmatch(r'[\d,]+\.\d{2}', row[i])) for row in rows) > len(rows) / 2
             for row in rows:
                 # A column printed with cents cannot safely become an integer if
@@ -230,10 +242,12 @@ def fallback_parse(text, allow_missing_quantity=False):
         quantity = number(row.get('quantity'))
         if (quantity is None and not allow_missing_quantity) or row.get('description') in (None, '', '-', '—'):
             continue
-        item = {key: None for key in ('description', 'quantity', 'unit', 'unit_price', 'line_total', 'sku', 'barcode', 'hsn', 'gst', 'discount')}
+        item = {key: None for key in ('description', 'quantity', 'unit', 'unit_price', 'line_total', 'sku', 'barcode', 'hsn', 'gst', 'discount', 'discount_amount', 'taxable_amount', 'cgst', 'sgst', 'igst')}
         item.update({key: row.get(key) for key in ('description', 'sku', 'barcode', 'hsn')})
-        item.update({key: number(row.get(key)) for key in ('quantity', 'unit_price', 'line_total', 'gst', 'discount')})
+        item.update({key: number(row.get(key)) for key in ('quantity', 'unit_price', 'line_total', 'gst', 'discount', 'discount_amount', 'taxable_amount', 'cgst', 'sgst', 'igst')})
         item['unit'] = normalize_unit(row.get('unit'))
+        if item['discount'] is not None and '%' in row.get('discount', '') and item['discount'] > 100:
+            item['discount'] = None
         for field in ('sku', 'barcode', 'hsn'):
             if item[field] in ('-', '—'):
                 item[field] = None
@@ -241,6 +255,10 @@ def fallback_parse(text, allow_missing_quantity=False):
         if rate:
             item['gst'] = number(rate[1])
         item['discount_type'] = 'PERCENT' if any(c[2] == 'discount' and '%' in c[3] for c in columns) else ('AMOUNT' if row.get('discount') else None)
+        if item['discount_type'] == 'PERCENT' and item['discount'] is not None and item['discount'] > 100:
+            item['discount'] = None
+        if any(row.get(field) for field in ('cgst_rate', 'sgst_rate', 'igst_rate')):
+            warnings.append('CGST/SGST/IGST percentage columns were not interpreted as tax amounts. Confirm the tax amounts separately.')
         # Only GST percentage headers unambiguously describe a rate.
         if row.get('gst') and not ('%' in row['gst'] or any(c[2] == 'gst' and ('%' in c[3] or 'rate' in c[3].lower()) for c in columns)):
             item['gst'] = None
@@ -265,7 +283,9 @@ def normalize_template_item(row):
 
 
 def extract_invoice(pdf_path):
+    started = time.monotonic()
     text = local_text(pdf_path)
+    extraction_ms = round((time.monotonic() - started) * 1000)
     generic = fallback_parse(text, allow_missing_quantity=text.ocr_used)
     warnings = generic.pop('warnings')
     if text.ocr_used:
@@ -274,15 +294,25 @@ def extract_invoice(pdf_path):
             # A dropped decimal point can turn 847.17 into 84717. Never silently
             # repair money; blank an OCR price that conflicts with the printed total.
             qty, price, total, gst = (item[field] for field in ('quantity', 'unit_price', 'line_total', 'gst'))
-            if qty and price is not None and total is not None and item['discount'] is None:
+            if qty and price is not None and total is not None:
                 base = qty * price
-                candidates = [base] + ([base * (1 + gst / 100)] if gst is not None else [])
-                inconsistent = min(abs(total - candidate) for candidate in candidates) > max(1, abs(total) * .01) if gst is not None else not base * .99 <= total <= base * 1.5
+                discount = item.get('discount_amount')
+                if discount is None and item['discount'] is not None:
+                    discount = base * item['discount'] / 100 if item['discount_type'] == 'PERCENT' else item['discount']
+                net = base - (discount or 0)
+                candidates = [net] + ([net * (1 + gst / 100)] if gst is not None else [])
+                inconsistent = min(abs(total - candidate) for candidate in candidates) > max(1, abs(total) * .01) if gst is not None else not net * .99 <= total <= net * 1.5
                 if inconsistent:
+                    item['quantity'] = None
                     item['unit_price'] = None
+                    item['line_total'] = None
                     inconsistent_rows.append(str(index))
+            if qty and price is not None and item.get('discount_amount') is not None and item['discount'] is not None and item['discount_type'] == 'PERCENT':
+                if abs(qty * price * item['discount'] / 100 - item['discount_amount']) > .1:
+                    item['discount'] = None
+                    warnings.append('Some printed discount rates disagree with the discount amounts. Confirm the missing rates against the PDF.')
         if inconsistent_rows:
-            warnings.append('Check quantities, prices, tax and totals for items ' + ', '.join(inconsistent_rows) + '. Their OCR amounts do not agree; uncertain purchase prices were left blank.')
+            warnings.append('Check quantities, prices, tax and totals for items ' + ', '.join(inconsistent_rows) + '. Their OCR amounts do not agree; uncertain quantities, purchase prices and line totals were left blank.')
     templates = read_templates(os.path.join(os.path.dirname(__file__), 'templates'))
     reader = ModuleType('local_pdfminer')
     reader.to_text = lambda *_args, **_kwargs: text
@@ -314,6 +344,10 @@ def extract_invoice(pdf_path):
         if not generic['raw_invoice_date']:
             generic['invoice_date'] = normalize_date(result.get('date'))
         generic['amount'] = generic['amount'] if generic['amount'] is not None else number(result.get('amount'))
+    if text.ocr_used and generic['amount'] is None:
+        warnings.append('No final invoice total was detected. Check for continuation pages and verify all items before saving.')
+    if any(row.get('unit') not in (None, 'BOX', 'STRIP', 'PIECE') for row in generic['items']):
+        warnings.append('Unsupported invoice units require a confirmed product conversion. Do not treat bags as boxes automatically.')
     if not generic['items']:
         warnings.append('No reliable product rows were detected. Add items manually or use a clearer digital PDF.')
     if not generic['invoice_number']:
@@ -322,7 +356,7 @@ def extract_invoice(pdf_path):
         warnings.append('Invoice date is ambiguous. Confirm it before saving.')
     if any(row['quantity'] is None or row['unit'] is None or row['unit_price'] is None for row in generic['items']):
         warnings.append('Some quantities, units or purchase prices are missing. Complete them before saving.')
-    return {'success': True, 'source': source, 'confidence': 'review_required', **generic, 'warnings': sorted(set(warnings))}
+    return {'success': True, 'code': 'REVIEW_REQUIRED' if generic['items'] else ('NO_PRODUCT_ROWS' if any(header_columns(line) for line in text.splitlines()) else 'UNSUPPORTED_INVOICE_FORMAT'), 'diagnostics': {**getattr(text, 'diagnostics', {}), 'extraction_ms': extraction_ms, 'total_ms': round((time.monotonic() - started) * 1000), 'ocr_used': text.ocr_used, 'row_count': len(generic['items'])}, 'source': source, 'confidence': 'review_required', **generic, 'warnings': sorted(set(warnings))}
 
 
 def main():
