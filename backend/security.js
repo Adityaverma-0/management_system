@@ -44,6 +44,19 @@ export function installSecurity(app, pool) {
   };
   app.post('/api/v2/admin/login', limiter, login('admin'));
   app.post('/api/v2/salesman/login', limiter, login('salesman'));
+
+  const generalRequests = new Map();
+  const generalLimiter = (req, res, next) => {
+    const key = req.ip;
+    const now = Date.now();
+    for (const [k, v] of generalRequests) if (v.until < now) generalRequests.delete(k);
+    const entry = generalRequests.get(key) || { count: 0, until: now + 60000 };
+    if (++entry.count > 300) return res.status(429).json({ error: 'Too many requests. Please slow down.' });
+    generalRequests.set(key, entry);
+    next();
+  };
+  app.use('/api/v2', generalLimiter);
+
   app.use('/api/v2', async (req, res, next) => {
     const token = req.headers.authorization?.match(/^Bearer ([a-f0-9]{64})$/i)?.[1];
     if (!token) return res.status(401).json({ error: 'Please sign in.' });

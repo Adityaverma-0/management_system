@@ -24,7 +24,10 @@ app.use(express.json({ limit: '50mb' }));
 const { Pool } = pg;
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  connectionTimeoutMillis: 10000
+  max: 15,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : undefined
 });
 
 // Helper for quick audit logging
@@ -51,6 +54,7 @@ export async function initializeDatabase() {
     await client.query(fs.readFileSync(path.join(backendDir, 'migrations/002_production_integrity.sql'), 'utf8'));
     await client.query(fs.readFileSync(path.join(backendDir, 'migrations/003_tax_settings.sql'), 'utf8'));
     await client.query(fs.readFileSync(path.join(backendDir, 'migrations/004_stock_requests.sql'), 'utf8'));
+    await client.query(fs.readFileSync(path.join(backendDir, 'migrations/005_performance_indexes.sql'), 'utf8'));
     await client.query('COMMIT');
   } catch (error) {
     await client.query('ROLLBACK');
