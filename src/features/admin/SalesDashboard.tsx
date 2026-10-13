@@ -1,3 +1,4 @@
+import SalesCharts from './SalesCharts';
 import { useState, useEffect, useCallback } from 'react';
 import { useApi } from '../auth/useApi';
 import { formatRupees } from '../../domain/money';
@@ -122,6 +123,8 @@ export default function SalesDashboard() {
               <p className="text-3xl font-bold text-gray-900 dark:text-white">{formatRupees(data.stats.avgOrderValue)}</p>
             </div>
           </div>
+
+          {data.analytics && <SalesCharts data={data.analytics} />}
 
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mt-6">
             <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">

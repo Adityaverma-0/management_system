@@ -198,7 +198,7 @@ export function installOperations(app,pool) {
     );
 
     const { rows: rawInvoices } = await pool.query(
-      `SELECT id, invoice_number, created_at, customer_name, total_amount_paise, payment_mode, status
+      `SELECT id, invoice_number, created_at, calendar_date, customer_name, total_amount_paise, payment_mode, status
        FROM invoices 
        WHERE status='VALID' AND ${dateFilter} 
        ORDER BY created_at DESC`, params
@@ -210,7 +210,25 @@ export function installOperations(app,pool) {
     const uniqueCustomers = Number(s.unique_customers);
     const avgOrderValue = totalOrders > 0 ? Math.round(totalSales / totalOrders) : 0;
 
+    // Reuse the selected invoices: no additional query or browser request.
+    const end = params[0];
+    const start = qDate || period !== 'week' && period !== 'month' ? end
+      : period === 'month' ? end.slice(0, 7) + '-01'
+      : new Date(Date.parse(end) - 6 * 86400000).toISOString().slice(0, 10);
+    const buckets = new Map();
+    for (let t = Date.parse(start); t <= Date.parse(end); t += 86400000) {
+      const date = new Date(t).toISOString().slice(0, 10);
+      buckets.set(date, { date, amountPaise: 0, bills: 0 });
+    }
+    const payments = { CASH: 0, UPI: 0, CREDIT: 0 };
+    for (const invoice of rawInvoices) {
+      const amount = Number(invoice.total_amount_paise);
+      const point = buckets.get(dateString(invoice.calendar_date));
+      if (point) { point.amountPaise += amount; point.bills++; }
+      if (Object.hasOwn(payments, invoice.payment_mode)) payments[invoice.payment_mode] += amount;
+    }
     return {
+      analytics: { series: [...buckets.values()], payments, totalAmountPaise: rawInvoices.reduce((sum, invoice) => sum + Number(invoice.total_amount_paise), 0), totalBills: rawInvoices.length },
       stats: { totalSales, totalOrders, uniqueCustomers, avgOrderValue },
       invoices: rawInvoices.map(i => ({...i, total_amount_paise: Number(i.total_amount_paise)}))
     };

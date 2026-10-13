@@ -4,10 +4,6 @@ import { formatRupees } from '../domain/money';
 
 const colors = ['#2563eb', '#16a34a', '#d97706'];
 const card = 'bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700';
-export function linePoints(values: number[]) {
-  const max = Math.max(1, ...values);
-  return values.map((value, i) => ({ x: values.length === 1 ? 300 : 45 + i * 510 / Math.max(1, values.length - 1), y: 165 - value * 135 / max }));
-}
 export function pieSegments(values: number[]) {
   const total = values.reduce((sum, value) => sum + Math.max(0, value), 0);
   let offset = 0;
@@ -47,7 +43,6 @@ export default function SalesAnalytics() {
     getSalesAnalytics(from,to,period).then(result => { if(active)setData(result); }).catch(e => {if(active)setError(e.message || 'Could not load sales analytics.');}).finally(()=>{if(active)setLoading(false);});
     return () => {active=false;};
   },[from,to,period,revision]);
-  const points = linePoints(data?.series.map(row=>row.amountPaise) || []);
   return <section className="space-y-3" aria-label="Sales analytics">
     <h3 className="font-bold text-lg">Sales analytics</h3>
     <p className="text-xs text-gray-500">Your recorded business dates. Sales amounts exclude cancelled bills; credit is sales, not cash received.</p>
@@ -58,20 +53,7 @@ export default function SalesAnalytics() {
       <button onClick={()=>setRevision(n=>n+1)} disabled={loading} className="text-blue-600">Refresh charts</button>
     </div>
     {loading ? <p role="status">Loading sales analytics...</p> : error ? <p role="alert" className="text-red-600">{error}</p> : data && <>
-      <section className={card}><h4 className="font-semibold">Sales trend</h4><p className="text-sm">{formatRupees(data.totalAmountPaise)} · {data.totalBills} valid bills</p>
-        {!data.totalBills ? <p className="py-8 text-sm text-gray-500">No completed sales for this date range.</p> : <>
-          <svg viewBox="0 0 600 210" className="w-full" role="img" aria-label="Sales amount trend in rupees">
-            <line x1="45" y1="165" x2="555" y2="165" stroke="currentColor" opacity=".3" />
-            <text x="45" y="18" fontSize="12" fill="currentColor">Peak {formatRupees(Math.max(...data.series.map(row=>row.amountPaise)))}</text>
-            <polyline points={points.map(p=>`${p.x},${p.y}`).join(' ')} fill="none" stroke="#2563eb" strokeWidth="3" />
-            {points.map((point,i)=><circle key={data.series[i].date} cx={point.x} cy={point.y} r="3" fill="#2563eb"><title>{data.series[i].date}: {formatRupees(data.series[i].amountPaise)}, {data.series[i].bills} bills</title></circle>)}
-            <text x="45" y="195" fontSize="12" fill="currentColor">{data.series[0]?.date}</text><text x="555" y="195" textAnchor="end" fontSize="12" fill="currentColor">{data.series[data.series.length-1]?.date}</text>
-          </svg>
-          <details className="text-sm"><summary className="cursor-pointer">View amounts and bill counts</summary><div className="max-h-60 overflow-auto"><table className="w-full text-left"><thead><tr><th>Period starting</th><th>Sales</th><th>Bills</th></tr></thead><tbody>{data.series.map(row=><tr key={row.date}><td>{row.date}</td><td>{formatRupees(row.amountPaise)}</td><td>{row.bills}</td></tr>)}</tbody></table></div></details>
-        </>}
-      </section>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <Distribution title="Sales by payment method" labels={['Cash','UPI','Credit']} values={[data.payments.CASH,data.payments.UPI,data.payments.CREDIT]} doughnut />
         <Distribution title="Bill status counts" labels={['Valid','Cancelled']} values={[data.statuses.VALID,data.statuses.VOID]} />
       </div>
     </>}
