@@ -562,11 +562,5 @@ export function installOperations(app,pool) {
     const history={...d.metadata.historicalStockLevels};for(const r of d.request_data.products)history[r.productId]=[...(history[r.productId]||[]),r.totalAvailable].slice(-7);
     await c.query("UPDATE work_days SET state='CLOSED',closed_at=$2,admin_note='Job cleared',metadata=metadata||$3::jsonb WHERE work_day_id=$1",[d.work_day_id,Date.now(),JSON.stringify({historicalStockLevels:history})]);await audit(c,'UNLOAD_APPROVED',d.work_day_id);return {success:true};
   })));
-  app.get("/api/v2/settings/tax", endpoint(async req => (await pool.query("SELECT data FROM app_settings WHERE id=$1", ["tax"])).rows[0]?.data || {cgst:0, sgst:0}));
-  app.get("/api/v2/admin/settings/tax", endpoint(async req => (await pool.query("SELECT data FROM app_settings WHERE id=$1", ["tax"])).rows[0]?.data || {cgst:0, sgst:0}));
-  app.put("/api/v2/admin/settings/tax", endpoint(async req => {
-    const {cgst, sgst} = req.body;
-    await pool.query("UPDATE app_settings SET data=jsonb_build_object('cgst', $1::numeric, 'sgst', $2::numeric) WHERE id=$3", [cgst, sgst, "tax"]);
-    return {success:true};
-  }));
+
 }

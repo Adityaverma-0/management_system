@@ -15,7 +15,6 @@ import SalesmenPage from './features/admin/SalesmenPage';
 import InventoryImport from './features/admin/InventoryImport';
 import ManualStockPage from './features/admin/ManualStockPage';
 import SalesDashboard from './features/admin/SalesDashboard';
-import TaxSettings from "./features/admin/TaxSettings";
 
 
 import './App.css';
@@ -60,7 +59,6 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
             <NavLink to="/inventory/import" className={navClass}><FileUp size={18} /> Inventory PDF Import</NavLink>
             <NavLink to="/manual-stock" className={navClass}><Database size={18} /> Manual Stock Add</NavLink>
             <NavLink to="/sales-dashboard" className={navClass}><TrendingUp size={18} /> Sales Dashboard</NavLink>
-            <NavLink to="/tax-settings" className={navClass}>Tax Settings</NavLink>
           </nav>
         </aside>
         <main className="flex-1 min-w-0 p-4 md:p-6 overflow-auto">
@@ -91,7 +89,6 @@ function App() {
                   <Route path="/inventory/import" element={<InventoryImport />} />
                   <Route path="/manual-stock" element={<ManualStockPage />} />
                   <Route path="/sales-dashboard" element={<SalesDashboard />} />
-                  <Route path="/tax-settings" element={<TaxSettings />} />
                   <Route path="*" element={<div>Page not found.</div>} />
                 </Routes>
               </AdminLayout>
