@@ -55,7 +55,8 @@ export async function initializeDatabase() {
     "migrations/004_stock_requests.sql",
     "migrations/005_performance_indexes.sql",
     "migrations/006_bill_round_off.sql",
-    "migrations/007_log_pagination_index.sql"
+    "migrations/007_log_pagination_index.sql",
+    "migrations/008_bill_settings.sql"
   ];
   for (const mig of migrations) {
     try {
