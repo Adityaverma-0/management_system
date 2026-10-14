@@ -172,11 +172,21 @@ export default function StockApprovalDashboard() {
 
     return (
       <div className="w-full max-w-none space-y-6 p-4 text-sm text-gray-900 dark:text-gray-100">
-        <div className="flex items-center gap-3">
-          <button aria-label="Go back" onClick={() => setSelectedReq(null)} className="rounded-full p-2 hover:bg-gray-200 dark:hover:bg-gray-800">
-            <ArrowLeft size={22} />
-          </button>
-          <h2 className="text-xl font-bold">Stock Request Detail</h2>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button aria-label="Go back" onClick={() => setSelectedReq(null)} className="rounded-full p-2 hover:bg-gray-200 dark:hover:bg-gray-800">
+              <ArrowLeft size={22} />
+            </button>
+            <h2 className="text-xl font-bold">Stock Request Detail</h2>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={() => handleDownloadReport(req)} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-xs font-bold">
+              Download Report
+            </button>
+            <button onClick={handlePrintReport} className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-1.5 rounded text-xs font-bold">
+              Print Report
+            </button>
+          </div>
         </div>
 
         {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-red-700">{error}</div>}
