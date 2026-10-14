@@ -112,6 +112,42 @@ export default function ApprovalDashboard() {
     }
   };
 
+  const handleDownloadReport = (reqObj: any) => {
+    const day = reqObj.requestData || {};
+    const totals = day.paymentTotals || { total: 0, cash: 0, upi: 0, credit: 0 };
+    const lines = [
+      "UNLOAD APPROVAL END-DAY REPORT",
+      `Request ID: ${reqObj.id}`,
+      `Salesman: ${getSalesmanName(day.salesmanId)} (${day.salesmanId})`,
+      `Vehicle: ${getVehicleName(day.vehicleId)} (${day.vehicleId})`,
+      `Date: ${formatCalendarDateIST(day.calendarDate)}`,
+      `Status: ${reqObj.status}`,
+      `Submitted: ${formatDateTimeIST(reqObj.requestedAt)}`,
+      "----------------------------------------",
+      `SALES BREAKDOWN:`,
+      `Cash: ${formatRupees(totals.cash)}`,
+      `UPI: ${formatRupees(totals.upi)}`,
+      `Credit: ${formatRupees(totals.credit)}`,
+      `Total Sales: ${formatRupees(totals.total)}`,
+      `Cash Collected: ${formatRupees(day.cashCollected)}`,
+      "----------------------------------------",
+      `PRODUCTS (${(day.products || []).length}):`,
+      ...(day.products || []).map((p: any) => `- ${p.productName}: Opening=${p.opening}, Loaded=${p.loadedAtStart}, Sold=${p.sold}, Expected=${p.expectedRemaining}, Counted=${p.countedRemaining}, Unload=${p.unloadQty}, Hold=${p.holdQty}`)
+    ].filter(Boolean);
+    const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `Unload_Approval_${reqObj.id.slice(0, 8)}.txt`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handlePrintReport = () => {
+    window.print();
+  };
+
   if (loading) return <div className="p-4">Loading approval dashboard...</div>;
 
   if (selectedReq) {
@@ -125,11 +161,21 @@ export default function ApprovalDashboard() {
 
     return (
       <div className="w-full max-w-none space-y-6 p-4 text-sm text-gray-900 dark:text-gray-100">
-        <div className="flex items-center gap-3">
-          <button aria-label="Go back" onClick={() => setSelectedReq(null)} className="rounded-full p-2 hover:bg-gray-200 dark:hover:bg-gray-800">
-            <ArrowLeft size={22} />
-          </button>
-          <h2 className="text-xl font-bold">Request Detail</h2>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button aria-label="Go back" onClick={() => setSelectedReq(null)} className="rounded-full p-2 hover:bg-gray-200 dark:hover:bg-gray-800">
+              <ArrowLeft size={22} />
+            </button>
+            <h2 className="text-xl font-bold">Request Detail</h2>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={() => handleDownloadReport(reqObj)} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-xs font-bold">
+              Download Report
+            </button>
+            <button onClick={handlePrintReport} className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-1.5 rounded text-xs font-bold">
+              Print Report
+            </button>
+          </div>
         </div>
 
         {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-red-700">{error}</div>}

@@ -156,6 +156,10 @@ export function installOperations(app,pool) {
     const existing = (await c.query(`SELECT id FROM ${table} WHERE id=$1 FOR UPDATE`, [id])).rows[0];
     if (!existing) throw new ApiError('Record not found.', 404);
     try {
+      if (table === 'products') {
+        await c.query('DELETE FROM sale_items WHERE product_id=$1', [id]);
+        await c.query('DELETE FROM stock_ledger WHERE product_id=$1', [id]);
+      }
       await c.query(`DELETE FROM ${table} WHERE id=$1`, [id]);
     } catch (e) {
       if (e.code === '23503') {
