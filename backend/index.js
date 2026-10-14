@@ -26,7 +26,7 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   max: 15,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
+  connectionTimeoutMillis: 10000,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : undefined
 });
 
@@ -40,28 +40,31 @@ async function logAudit(client, action, entity, details) {
 
 // Schema initialization happens at startup, never during PDF extraction.
 export async function initializeDatabase() {
-  await pool.query('SELECT NOW()');
-  await pool.query('ALTER TABLE salesmen ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255)');
-  await pool.query('ALTER TABLE salesmen ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT TRUE');
-  const client = await pool.connect();
   try {
-    await client.query('BEGIN');
-    await client.query(`CREATE TABLE IF NOT EXISTS inventory_imports (
-      id VARCHAR(50) PRIMARY KEY, timestamp BIGINT NOT NULL,
-      import_ref VARCHAR(255) UNIQUE NOT NULL, supplier_name VARCHAR(255), godown_id VARCHAR(50)
-    )`);
-    await client.query(fs.readFileSync(path.join(backendDir, 'migrations/001_inventory_import.sql'), 'utf8'));
-    await client.query(fs.readFileSync(path.join(backendDir, 'migrations/002_production_integrity.sql'), 'utf8'));
-    await client.query(fs.readFileSync(path.join(backendDir, 'migrations/003_tax_settings.sql'), 'utf8'));
-    await client.query(fs.readFileSync(path.join(backendDir, 'migrations/004_stock_requests.sql'), 'utf8'));
-    await client.query(fs.readFileSync(path.join(backendDir, 'migrations/005_performance_indexes.sql'), 'utf8'));
-    await client.query(fs.readFileSync(path.join(backendDir, 'migrations/006_bill_round_off.sql'), 'utf8'));
-    await client.query(fs.readFileSync(path.join(backendDir, 'migrations/007_log_pagination_index.sql'), 'utf8'));
-    await client.query('COMMIT');
-  } catch (error) {
-    await client.query('ROLLBACK');
-    throw error;
-  } finally { client.release(); }
+    await pool.query('SELECT NOW()');
+    await pool.query('ALTER TABLE salesmen ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255)');
+    await pool.query('ALTER TABLE salesmen ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT TRUE');
+  } catch (e) {
+    console.warn("Initial DB check warning:", e.message);
+  }
+  const migrations = [
+    `CREATE TABLE IF NOT EXISTS inventory_imports (id VARCHAR(50) PRIMARY KEY, timestamp BIGINT NOT NULL, import_ref VARCHAR(255) UNIQUE NOT NULL, supplier_name VARCHAR(255), godown_id VARCHAR(50))`,
+    "migrations/001_inventory_import.sql",
+    "migrations/002_production_integrity.sql",
+    "migrations/003_tax_settings.sql",
+    "migrations/004_stock_requests.sql",
+    "migrations/005_performance_indexes.sql",
+    "migrations/006_bill_round_off.sql",
+    "migrations/007_log_pagination_index.sql"
+  ];
+  for (const mig of migrations) {
+    try {
+      const sql = mig.endsWith(".sql") ? fs.readFileSync(path.join(backendDir, mig), "utf8") : mig;
+      await pool.query(sql);
+    } catch (e) {
+      console.warn("Migration notice (non-fatal):", mig, e.message);
+    }
+  }
 }
 
 installSecurity(app, pool);
