@@ -159,10 +159,11 @@ export function installOperations(app,pool) {
       if (table === 'products') {
         await c.query('DELETE FROM sale_items WHERE product_id=$1', [id]);
         await c.query('DELETE FROM stock_ledger WHERE product_id=$1', [id]);
+        await c.query('DELETE FROM purchase_lines WHERE product_id=$1', [id]);
       }
       await c.query(`DELETE FROM ${table} WHERE id=$1`, [id]);
     } catch (e) {
-      if (e.code === '23503') {
+      if (e.code === '23503' && table !== 'products') {
         await c.query(`UPDATE ${table} SET active=FALSE WHERE id=$1`, [id]).catch(() => {});
         throw new ApiError('This record is referenced by existing transactions and cannot be deleted. It has been deactivated instead.', 409);
       }
