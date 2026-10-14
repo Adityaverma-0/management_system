@@ -149,6 +149,24 @@ export function installOperations(app,pool) {
   }));
   app.post('/api/v2/admin/:table(godowns|products|salesmen|vehicles)',saveMaster);
   app.put('/api/v2/admin/:table(godowns|products|salesmen|vehicles)/:id',saveMaster);
+
+  app.delete('/api/v2/admin/:table(godowns|products|salesmen|vehicles)/:id', endpoint(async req => transaction(pool, async c => {
+    const table = req.params.table;
+    const id = req.params.id;
+    const existing = (await c.query(`SELECT id FROM ${table} WHERE id=$1 FOR UPDATE`, [id])).rows[0];
+    if (!existing) throw new ApiError('Record not found.', 404);
+    try {
+      await c.query(`DELETE FROM ${table} WHERE id=$1`, [id]);
+    } catch (e) {
+      if (e.code === '23503') {
+        await c.query(`UPDATE ${table} SET active=FALSE WHERE id=$1`, [id]).catch(() => {});
+        throw new ApiError('This record is referenced by existing transactions and cannot be deleted. It has been deactivated instead.', 409);
+      }
+      throw e;
+    }
+    await audit(c, 'DELETE_MASTER', id, { table });
+    return { success: true };
+  })));
   app.post('/api/v2/admin/salesmen/:id/:action(set-pin|reset-pin)',endpoint(async req=>transaction(pool,async c=>{
     const password=req.body?.pin || req.body?.password;
     if(typeof password!=='string'||password.length<8||password.length>256)throw new ApiError('Enter a new password with 8–256 characters.');

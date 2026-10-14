@@ -7,8 +7,37 @@ import StockSummaryTable from '../stock/StockSummaryTable';
 import DayReportPrint from './DayReportPrint';
 import { getDayStockReport } from '../../domain/dayStockReport';
 
-export default function HistoryDayDetail({ day, invoices }: { day: WorkDay, invoices: Invoice[] }) {
+
+  export default function HistoryDayDetail({ day, invoices }: { day: WorkDay, invoices: Invoice[] }) {
   const [report, setReport] = useState<DayStockReportRow[]>([]);
+  const handleDownloadReport = () => {
+    const lines = [
+      "SALESMAN DAILY REPORT",
+      `Salesman: ${day.salesmanId}`,
+      `Vehicle: ${day.vehicleId}`,
+      `Date: ${new Date(day.openedAt).toLocaleDateString()}`,
+      `Status: ${day.state}`,
+      "----------------------------------------",
+      `TOTAL SALES: ${formatRupees(day.totalSalesPaise)}`,
+      `  - Cash: ${formatRupees(day.cashSalesPaise)}`,
+      `  - UPI: ${formatRupees(day.upiSalesPaise)}`,
+      `  - Credit: ${formatRupees(day.creditSalesPaise)}`,
+      "----------------------------------------",
+      "PRODUCT STOCK SUMMARY:",
+      ...report.map(r => `${r.productName}: Sold=${r.sold}, Available=${r.totalAvailable}, Held=${r.holdQty}, Unloaded=${r.unloadQty}`),
+      "----------------------------------------",
+      `INVOICES (${dayInvoices.length}):`,
+      ...dayInvoices.map(i => `Inv: ${i.invoiceNumber} | Customer: ${i.customerName || "Walk-in"} | Mode: ${i.paymentMode} | Total: ${formatRupees(i.totalAmountPaise)}`)
+    ];
+    const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `Salesman_Report_${day.calendarDate || "day"}.txt`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
   
   useEffect(() => {
     getDayStockReport(day.workDayId).then(setReport);
@@ -21,9 +50,14 @@ export default function HistoryDayDetail({ day, invoices }: { day: WorkDay, invo
       
       <div className="flex flex-wrap gap-2 justify-between items-center mb-4">
         <h3 className="font-bold text-lg">Day Details</h3>
-        <button onClick={() => window.print()} className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-1 rounded font-bold text-sm">
-          Print Report
-        </button>
+        <div className="space-x-2">
+          <button onClick={handleDownloadReport} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded font-bold text-sm">
+            Download Report
+          </button>
+          <button onClick={() => window.print()} className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-1 rounded font-bold text-sm">
+            Print Report
+          </button>
+        </div>
       </div>
       <DayReportPrint day={day} report={report} />
       <div className="print:hidden">

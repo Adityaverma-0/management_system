@@ -22,6 +22,7 @@ export default function VehiclesPage() {
   const [name, setName] = useState('');
   const [godownId, setGodownId] = useState('');
   const [editId, setEditId] = useState('');
+  const [search, setSearch] = useState('');
 
   const load = useCallback(async () => {
     try {
@@ -53,6 +54,18 @@ export default function VehiclesPage() {
   const assignedSalesman = salesmen.find(s => s.vehicle_id === selected);
   const selectedVehicle = vehicles.find(v => v.id === selected);
 
+  
+  const removeVehicle = async (id: string, name: string) => {
+    if (!window.confirm(`Are you sure you want to delete vehicle "${name}"?`)) return;
+    try {
+      const res = await fetchApi(`${API_URL}/admin/vehicles/${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Delete failed.');
+      if (selected === id) setSelected('');
+      await load();
+    } catch (e: any) { setError(e.message); }
+  };
+
   const save = async () => {
     if (saving.current) return;
     saving.current = true; setBusy(true);
@@ -82,17 +95,23 @@ export default function VehiclesPage() {
           <button disabled={busy} onClick={save} className="bg-blue-600 text-white rounded px-4 py-2">{editId ? 'Update' : 'Add'}</button>
           {editId && <button onClick={() => { setEditId(''); setName(''); setGodownId(''); }} className="border rounded px-4 py-2">Cancel</button>}
         </div>
-        <div className="ui-table-scroll"><table className="min-w-full text-sm">
-          <thead className="text-left text-gray-500"><tr><th className="p-2">Name</th><th className="p-2">Location</th><th className="p-2">Godown</th><th className="p-2"></th></tr></thead>
-          <tbody>{vehicles.map(v => (
-            <tr key={v.id} className="border-t dark:border-gray-700">
-              <td className="p-2"><button className={selected === v.id ? 'text-blue-600 font-bold' : ''} onClick={() => setSelected(v.id)}>{v.name}</button></td>
-              <td className="p-2">{v.location_name}</td>
-              <td className="p-2">{godowns.find(g => g.id === v.godown_id)?.name || v.godown_id}</td>
-              <td className="p-2 text-right"><button className="text-blue-600" onClick={() => { setEditId(v.id); setName(v.name); setGodownId(v.godown_id); }}>Edit</button></td>
-            </tr>
-          ))}</tbody>
-        </table></div>
+        <div className="space-y-3">
+          <input className="border dark:border-gray-600 bg-transparent rounded p-2 w-full text-sm" placeholder="Search vehicles by name or location..." value={search} onChange={e => setSearch(e.target.value)} />
+          <div className="ui-table-scroll"><table className="min-w-full text-sm">
+            <thead className="text-left text-gray-500"><tr><th className="p-2">Name</th><th className="p-2">Location</th><th className="p-2">Godown</th><th className="p-2 text-right">Actions</th></tr></thead>
+            <tbody>{vehicles.filter(v => v.name.toLowerCase().includes(search.toLowerCase()) || (v.location_name && v.location_name.toLowerCase().includes(search.toLowerCase()))).map(v => (
+              <tr key={v.id} className="border-t dark:border-gray-700">
+                <td className="p-2"><button className={selected === v.id ? 'text-blue-600 font-bold' : ''} onClick={() => setSelected(v.id)}>{v.name}</button></td>
+                <td className="p-2">{v.location_name}</td>
+                <td className="p-2">{godowns.find(g => g.id === v.godown_id)?.name || v.godown_id}</td>
+                <td className="p-2 text-right space-x-2">
+                  <button className="text-blue-600 hover:underline" onClick={() => { setEditId(v.id); setName(v.name); setGodownId(v.godown_id); }}>Edit</button>
+                  <button className="text-red-600 hover:underline" onClick={() => removeVehicle(v.id, v.name)}>Delete</button>
+                </td>
+              </tr>
+            ))}</tbody>
+          </table></div>
+        </div>
       </div>
 
       {selectedVehicle && (

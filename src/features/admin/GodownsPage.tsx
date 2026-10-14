@@ -25,6 +25,18 @@ export default function GodownsPage() {
   const [search, setSearch] = useState('');
   const [histSearch, setHistSearch] = useState('');
 
+  
+  const removeGodown = async (id: string, name: string) => {
+    if (!window.confirm(`Are you sure you want to delete godown "${name}"?`)) return;
+    try {
+      const res = await fetchApi(`${API_URL}/admin/godowns/${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Delete failed.');
+      if (selected === id) setSelected('');
+      await load();
+    } catch (e: any) { setError(e.message); }
+  };
+
   const load = useCallback(async () => {
     try {
       const [g, p] = await Promise.all([fetchApi(`${API_URL}/admin/godowns`), fetchApi(`${API_URL}/admin/products`)]);
@@ -97,7 +109,10 @@ export default function GodownsPage() {
                 <button className={selected === g.id ? 'text-blue-600 font-bold' : ''} onClick={() => setSelected(g.id)}>{g.name}{g.active === false ? ' (Inactive)' : ''}</button>
               </td>
               <td className="p-2">{g.location_name}</td>
-              <td className="p-2 text-right"><button className="text-blue-600" onClick={() => { setEditId(g.id); setName(g.name); setLocation(g.location_name); setActive(g.active !== false); }}>Edit</button></td>
+              <td className="p-2 text-right space-x-2">
+                <button className="text-blue-600 hover:underline" onClick={() => { setEditId(g.id); setName(g.name); setLocation(g.location_name); setActive(g.active !== false); }}>Edit</button>
+                <button className="text-red-600 hover:underline" onClick={() => removeGodown(g.id, g.name)}>Delete</button>
+              </td>
             </tr>
           ))}</tbody>
         </table></div>

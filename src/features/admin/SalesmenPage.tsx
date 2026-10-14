@@ -23,6 +23,17 @@ export default function SalesmenPage() {
   const [pin, setPin] = useState('');
   const [warning, setWarning] = useState('');
 
+  
+  const removeSalesman = async (id: string, name: string) => {
+    if (!window.confirm(`Are you sure you want to delete salesman "${name}"?`)) return;
+    try {
+      const res = await fetchApi(`${API_URL}/admin/salesmen/${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Delete failed.');
+      await load();
+    } catch (e: any) { setError(e.message); }
+  };
+
   const load = useCallback(async () => {
     try {
       const [s, v, g] = await Promise.all([
@@ -119,9 +130,10 @@ export default function SalesmenPage() {
               <td className="p-2">{s.location_name}</td>
               <td className="p-2">{vehicles.find(v => v.id === s.vehicle_id)?.name || '—'}</td>
               <td className="p-2">{s.status}</td>
-              <td className="p-2 text-right">
-                <button className="text-blue-600 mr-3" onClick={() => { setEditId(s.id); setName(s.name); setMobile(s.mobile); setLocation(s.location_name); setVehicleId(s.vehicle_id || ''); setStatus(s.status); }}>Edit</button>
-                <button className="text-red-600" onClick={() => resetPin(s.id)}>Reset password</button>
+              <td className="p-2 text-right space-x-2">
+                <button className="text-blue-600 hover:underline" onClick={() => { setEditId(s.id); setName(s.name); setMobile(s.mobile); setLocation(s.location_name); setVehicleId(s.vehicle_id || ''); setStatus(s.status); }}>Edit</button>
+                <button className="text-amber-600 hover:underline" onClick={() => resetPin(s.id)}>Reset PIN</button>
+                <button className="text-red-600 hover:underline" onClick={() => removeSalesman(s.id, s.name)}>Delete</button>
               </td>
             </tr>
           ))}</tbody>

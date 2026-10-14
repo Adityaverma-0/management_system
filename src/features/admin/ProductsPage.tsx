@@ -39,6 +39,17 @@ export default function ProductsPage() {
     return '';
   }, [name, pricePerStrip, unitsPerStrip, stripsPerBox]);
 
+  
+  const removeProduct = async (id: string, name: string) => {
+    if (!window.confirm(`Are you sure you want to delete product "${name}"?`)) return;
+    try {
+      const res = await fetchApi(`${API_URL}/admin/products/${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Delete failed.');
+      await load();
+    } catch (e: any) { setError(e.message); }
+  };
+
   const save = async () => {
     if (validationError) return setError(validationError);
     try {
@@ -94,7 +105,10 @@ export default function ProductsPage() {
               <td className="p-2">{formatRupees(p.price_paise * (p.units_per_strip || 1))} <span className="text-xs text-gray-400">({formatRupees(p.price_paise)}/pc)</span></td>
               <td className="p-2">1 Box = {p.strips_per_box} Strips = {p.pieces_per_box} Pieces</td>
               <td className="p-2">{p.active ? 'Yes' : 'No'}</td>
-              <td className="p-2 text-right"><button className="text-blue-600" onClick={() => { setEditId(p.id); setName(p.name); setPricePerStrip(String(Number(((p.price_paise * (p.units_per_strip || 1)) / 100).toFixed(2)))); setUnitsPerStrip(String(p.units_per_strip)); setStripsPerBox(String(p.strips_per_box)); setActive(!!p.active); setMetadata({ sku: p.sku || '', barcode: p.barcode || '', hsn: p.hsn || '', uom: p.uom || '' }); }}>Edit</button></td>
+              <td className="p-2 text-right space-x-2">
+                <button className="text-blue-600 hover:underline" onClick={() => { setEditId(p.id); setName(p.name); setPricePerStrip(String(Number(((p.price_paise * (p.units_per_strip || 1)) / 100).toFixed(2)))); setUnitsPerStrip(String(p.units_per_strip)); setStripsPerBox(String(p.strips_per_box)); setActive(!!p.active); setMetadata({ sku: p.sku || '', barcode: p.barcode || '', hsn: p.hsn || '', uom: p.uom || '' }); }}>Edit</button>
+                <button className="text-red-600 hover:underline" onClick={() => removeProduct(p.id, p.name)}>Delete</button>
+              </td>
             </tr>
           ))}</tbody>
         </table></div>

@@ -32,6 +32,36 @@ interface StockRequest {
   adminNote?: string;
 }
 
+
+  const handleDownloadReport = (req: StockRequest) => {
+    const lines = [
+      `STOCK APPROVAL REQUEST REPORT`,
+      `Request ID: ${req.id}`,
+      `Salesman: ${req.salesmanName || req.salesmanId}`,
+      `Vehicle: ${req.vehicleName || req.vehicleId}`,
+      `Godown: ${req.godownName || req.godownId}`,
+      `Status: ${req.status}`,
+      `Submitted: ${formatDateTimeIST(req.requestedAt)}`,
+      req.processedAt ? `Processed: ${formatDateTimeIST(req.processedAt)}` : '',
+      req.adminNote ? `Admin Note: ${req.adminNote}` : '',
+      `----------------------------------------`,
+      `REQUESTED ITEMS (${req.items.length}):`,
+      ...req.items.map(i => `- ${i.productName || i.productId}: ${formatItemBreakdown(i)}`)
+    ].filter(Boolean);
+    const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `Stock_Approval_${req.id.slice(0, 8)}.txt');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handlePrintReport = () => {
+    window.print();
+  };
+
 export default function StockApprovalDashboard() {
   const fetchApi = useApi();
   const [requests, setRequests] = useState<StockRequest[]>([]);
