@@ -8,7 +8,7 @@ import { installSecurity, hashPassword } from '../security.js';
 import { installOperations } from '../operations.js';
 
 // Explicit test URL only; never fall back to production credentials.
-test('unified auth, rounding, concurrent stock, rollback, pagination and reports', {skip: !process.env.TEST_DATABASE_URL}, async()=>{
+test('unified auth, inclusive billing, concurrent stock, rollback, pagination and reports', {skip: !process.env.TEST_DATABASE_URL}, async()=>{
  const schema='targeted_'+crypto.randomBytes(6).toString('hex');
  const admin=new pg.Pool({connectionString:process.env.TEST_DATABASE_URL});
  let db,server;
@@ -28,8 +28,8 @@ test('unified auth, rounding, concurrent stock, rollback, pagination and reports
   await db.query("INSERT INTO stock_ledger(id,timestamp,type,product_id,quantity_pieces,location_id,work_day_id) VALUES('l',1,'LOAD_IN','p',100,'v','d'),('m',1,'LOAD_IN','q',100,'v','d')");
   const app=express();app.use(express.json());installSecurity(app,db);installOperations(app,db);
   server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));
-  const call=async(path,body,token,key=crypto.randomUUID())=>{
-   const r=await fetch(`http://127.0.0.1:${server.address().port}/api/v2${path}`,{method:body===undefined?'GET':'POST',headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{}),'Idempotency-Key':key},body:body===undefined?undefined:JSON.stringify(body)});
+  const call=async(path,body,token,key=crypto.randomUUID(),method=body===undefined?'GET':'POST')=>{
+   const r=await fetch(`http://127.0.0.1:${server.address().port}/api/v2${path}`,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{}),'Idempotency-Key':key},body:body===undefined?undefined:JSON.stringify(body)});
    return {status:r.status,data:await r.json()};
   };
   const ok=async(...args)=>{const r=await call(...args);assert.equal(r.status,200,JSON.stringify(r));return r.data;};
@@ -40,22 +40,25 @@ test('unified auth, rounding, concurrent stock, rollback, pagination and reports
   assert.equal((await call('/salesman/snapshot',undefined,a.token)).status,403);
   assert.equal((await call('/admin/products')).status,401);
   assert.equal((await ok('/session',undefined,s.token)).user.id,'s');
-  const sale={workDayId:'d',items:[{productId:'p',quantityPieces:1}],paymentMode:'CASH',totalAmountPaise:12535};
+  const sale={workDayId:'d',items:[{productId:'p',quantityPieces:1}],paymentMode:'CASH',totalAmountPaise:12500};
   const key=crypto.randomUUID();const bill=await ok('/salesman/sales',sale,s.token,key);
-  assert.equal(bill.totalAmountPaise,12500);assert.equal(bill.roundOffPaise,-35);
-  assert.equal((await call('/salesman/sales',{...sale,totalAmountPaise:12500,subtotalPaise:12540},s.token)).status,409);
+  assert.equal(bill.totalAmountPaise,12500);assert.equal(bill.invoiceNumber,"1");
+  assert.equal((await call('/salesman/sales',{...sale,totalAmountPaise:12540},s.token)).status,409);
   assert.equal((await ok('/salesman/sales',sale,s.token,key)).id,bill.id);
   assert.equal((await call('/salesman/sales',{...sale,totalAmountPaise:1},s.token,key)).status,409);
+  assert.equal((await ok('/settings/business',undefined,a.token)).businessName,'');
+  assert.equal((await call('/admin/settings/business',{businessName:'Store',gstin:'123456789012345'},a.token,undefined,'PUT')).status,400);
+  assert.equal((await call('/admin/settings/business',{businessName:'Store',gstin:''},s.token,undefined,'PUT')).status,403);
+  await ok('/admin/settings/business',{businessName:'My Store',gstin:'27abcde1234f1z5'},a.token,undefined,'PUT');
+  assert.equal((await ok('/settings/business',undefined,s.token)).gstin,'27ABCDE1234F1Z5');
   for(const [paise,payable] of [[12549,12500],[12550,12600],[12599,12600],[25060,25100],[49980,50000]]) {
    await db.query("UPDATE products SET price_paise=$1 WHERE id='p'",[paise]);
-   const inv=await ok('/salesman/sales',{...sale,totalAmountPaise:paise},s.token);
+   const inv=await ok('/salesman/sales',{...sale,totalAmountPaise:payable},s.token);
    assert.equal(inv.totalAmountPaise,payable);
   }
   await db.query("UPDATE products SET price_paise=12535 WHERE id='p'");
-  await db.query("UPDATE app_settings SET data=' {\"cgst\":2.5,\"sgst\":9}' WHERE id='tax'");
-  const multi=await ok('/salesman/sales',{...sale,items:[...sale.items,{productId:'q',quantityPieces:1}],totalAmountPaise:27953},s.token);
-  assert.equal(multi.totalAmountPaise,28000);
-  await db.query("UPDATE app_settings SET data='{\"cgst\":0,\"sgst\":0}' WHERE id='tax'");
+  const multi=await ok('/salesman/sales',{...sale,items:[...sale.items,{productId:'q',quantityPieces:1}],totalAmountPaise:25100},s.token);
+  assert.equal(multi.totalAmountPaise,25100);
   assert.equal((await call('/salesman/sales',{...sale,items:[{productId:'p',quantityPieces:0}]},s.token)).status,400);
   assert.equal((await call('/salesman/sales',{...sale,items:[{productId:'p',quantityPieces:1000}]},s.token)).status,409);
   const count=async()=>Number((await db.query('SELECT COUNT(*) AS n FROM invoices')).rows[0].n);
@@ -63,17 +66,23 @@ test('unified auth, rounding, concurrent stock, rollback, pagination and reports
   await db.query("CREATE FUNCTION fail_audit() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'test failure'; END $$; CREATE TRIGGER fail_audit BEFORE INSERT ON audit_log FOR EACH ROW EXECUTE FUNCTION fail_audit()");
   assert.equal((await call('/salesman/sales',sale,s.token)).status,503);assert.equal(await count(),before);
   await db.query('DROP TRIGGER fail_audit ON audit_log');
-  const race=await Promise.all([call('/salesman/sales',{...sale,items:[{productId:'p',quantityPieces:90}],totalAmountPaise:1128150},s.token),call('/salesman/sales',{...sale,items:[{productId:'p',quantityPieces:90}],totalAmountPaise:1128150},s.token)]);
+  const race=await Promise.all([call('/salesman/sales',{...sale,items:[{productId:'p',quantityPieces:90}],totalAmountPaise:1128200},s.token),call('/salesman/sales',{...sale,items:[{productId:'p',quantityPieces:90}],totalAmountPaise:1128200},s.token)]);
   assert.deepEqual(race.map(r=>r.status).sort(),[200,409]);
   const snap=await ok('/salesman/snapshot',undefined,s.token);
-  assert.equal(snap.invoices.find(i=>i.id===bill.id).roundOffPaise,-35);
+  assert.equal(snap.invoices.find(i=>i.id===bill.id).businessName,"FMCG Van Sales");
   const receipt=await ok('/salesman/invoices/'+bill.id,undefined,s.token);
-  assert.equal(receipt.totalAmountPaise,12500);assert.equal(receipt.roundOffPaise,-35);assert.equal(receipt.workDayState,'ON_ROUTE');
+  assert.equal(receipt.totalAmountPaise,12500);
+  for (const field of ['vehicleId','cgstPercent','sgstPercent','roundOffPaise','subtotalPaise']) assert.equal(field in receipt,false);assert.equal(receipt.workDayState,'ON_ROUTE');
   assert.equal((await call('/salesman/invoices/missing',undefined,s.token)).status,404);
   assert.equal(snap.workDays[0].totalSalesPaise,snap.invoices.reduce((n,i)=>n+i.totalAmountPaise,0));
   const report=await ok('/admin/sales',undefined,a.token);
   assert.equal(report.stats.totalSales,snap.workDays[0].totalSalesPaise);
   assert.equal(Number((await db.query('SELECT SUM(amount_paise) AS n FROM accounting_ledger')).rows[0].n),report.stats.totalSales);
+  const newer=await ok('/salesman/invoices/'+multi.id,undefined,s.token);
+  assert.equal(newer.businessName,'My Store');assert.equal(newer.gstin,'27ABCDE1234F1Z5');
+  assert.equal(receipt.businessName,'FMCG Van Sales');assert.equal(receipt.gstin,'');
+  const sequences=snap.invoices.map(i=>i.invoiceSeq).sort((a,b)=>a-b);
+  assert.deepEqual(sequences,Array.from({length:sequences.length},(_,n)=>n+1));
   const first=await ok('/admin/vehicles/v/history?limit=2',undefined,a.token);const last=first.at(-1);
   const next=await ok(`/admin/vehicles/v/history?limit=2&before=${last.timestamp}&beforeId=${last.id}`,undefined,a.token);
   assert.equal(next.length,2);assert.ok(!next.some(i=>first.some(j=>j.id===i.id)));

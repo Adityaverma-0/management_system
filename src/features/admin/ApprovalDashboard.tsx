@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
+import { useAuth } from '../auth/AuthContext';
+import { subscribeDayUpdates } from '../auth/dayUpdates';
 import { useApi } from '../auth/useApi';
 import { ArrowLeft, CheckCircle, RotateCcw, XCircle } from 'lucide-react';
 import { formatRupees } from '../../domain/money';
@@ -11,12 +13,14 @@ const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/
 
 export default function ApprovalDashboard() {
   const fetchApi = useApi();
+  const { token } = useAuth();
   const [requests, setRequests] = useState<any[]>([]);
   const [salesmen, setSalesmen] = useState<any[]>([]);
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [busyDayId, setBusyDayId] = useState('');
+  const refreshVersion = useRef(0);
   const [selectedReq, setSelectedReq] = useState<any>(null);
 
   const getSalesmanName = useCallback((id: string) => {
@@ -29,34 +33,43 @@ export default function ApprovalDashboard() {
   }, [vehicles]);
 
   const refresh = useCallback(async () => {
+    const version = ++refreshVersion.current;
     try {
       const res = await fetchApi(`${API_URL}/unload-requests`, {  });
       if (!res.ok) throw new Error('Failed to fetch from backend');
       const data = await res.json();
-      setRequests(Array.isArray(data) ? data.map((d: any) => ({ ...d, requestData: d.request_data || d.requestData })) : []);
+      if (version !== refreshVersion.current) return;
+      const next = Array.isArray(data) ? data.map((d: any) => ({ ...d, requestData: d.request_data || d.requestData })) : [];
+      setRequests(next);
+      setSelectedReq((current: any) => current ? next.find((row: any) => row.id === current.id) || null : null);
       // WHY: names are now fetched from the master tables; id is only a fallback.
       try {
         const [sRes, vRes] = await Promise.all([fetchApi(`${API_URL}/admin/salesmen`), fetchApi(`${API_URL}/admin/vehicles`)]);
-        setSalesmen(await sRes.json()); setVehicles(await vRes.json());
+        const [people, vans] = await Promise.all([sRes.json(), vRes.json()]);
+        if (version !== refreshVersion.current) return;
+        setSalesmen(people); setVehicles(vans);
       } catch { /* keep empty maps; id will show as fallback */ }
       setError('');
     } catch (loadError) {
       console.error('Failed to load admin approval dashboard', loadError);
+      if (version !== refreshVersion.current) return;
       setError(loadError instanceof Error ? loadError.message : 'Could not load workday submissions.');
     } finally {
-      setLoading(false);
+      if (version === refreshVersion.current) setLoading(false);
     }
   }, [fetchApi]);
 
   useEffect(() => {
     void refresh();
+    const unsubscribe = token ? subscribeDayUpdates(API_URL, token, () => void refresh()) : () => {};
     const interval = window.setInterval(() => void refresh(), 10000);
     window.addEventListener('focus', refresh);
     return () => {
+      unsubscribe();
       window.clearInterval(interval);
       window.removeEventListener('focus', refresh);
     };
-  }, [refresh]);
+  }, [refresh, token]);
 
   const pendingRequests = useMemo(
     () => requests.filter(req => req.status === 'PENDING' || req.status === 'SENT_BACK'),

@@ -1,0 +1,32 @@
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import BusinessSettings from './BusinessSettings';
+const { fetchApi } = vi.hoisted(() => ({ fetchApi: vi.fn() }));
+vi.mock('../auth/useApi', () => ({ useApi: () => fetchApi }));
+beforeEach(() => fetchApi.mockReset());
+afterEach(cleanup);
+it('warns about missing business identity, validates GSTIN and saves edits', async () => {
+  fetchApi.mockResolvedValueOnce({ ok: true, json: async () => ({ businessName: '', gstin: '', fallbackBusinessName: 'FMCG Van Sales' }) });
+  render(<BusinessSettings />);
+  await screen.findByText(/Business name is not set/);
+  fireEvent.change(screen.getByLabelText('Business Name'), { target: { value: 'My Store' } });
+  fireEvent.change(screen.getByLabelText('GST Number'), { target: { value: '123456789012345' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Save Settings' }));
+  await screen.findByText(/Enter a valid 15-character GSTIN/);
+  expect(fetchApi).toHaveBeenCalledTimes(1);
+  fetchApi.mockResolvedValueOnce({ ok: true, json: async () => ({ businessName: 'My Store', gstin: '27ABCDE1234F1Z5', fallbackBusinessName: 'FMCG Van Sales' }) });
+  fireEvent.change(screen.getByLabelText('GST Number'), { target: { value: '27abcde1234f1z5' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Save Settings' }));
+  await screen.findByRole('status');
+  expect(JSON.parse(fetchApi.mock.calls[1][1].body)).toEqual({ businessName: 'My Store', gstin: '27ABCDE1234F1Z5' });
+  expect(screen.queryByText(/Business name is not set/)).toBeNull();
+});
+it('does not announce success when saving fails', async () => {
+  fetchApi.mockResolvedValueOnce({ ok: true, json: async () => ({ businessName: 'Store', gstin: '', fallbackBusinessName: 'FMCG Van Sales' }) });
+  render(<BusinessSettings />);
+  await screen.findByRole('button', { name: 'Save Settings' });
+  fetchApi.mockResolvedValueOnce({ ok: false, json: async () => ({ error: 'Could not save settings.' }) });
+  fireEvent.click(screen.getByRole('button', { name: 'Save Settings' }));
+  await screen.findByText('Could not save settings.');
+  await waitFor(() => expect(screen.queryByRole('status')).toBeNull());
+});

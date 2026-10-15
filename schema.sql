@@ -105,11 +105,15 @@ CREATE INDEX IF NOT EXISTS idx_stock_requests_workday ON stock_requests(work_day
 
 CREATE TABLE invoices (
     id VARCHAR(50) PRIMARY KEY,
-    invoice_number VARCHAR(100) UNIQUE NOT NULL,
+    invoice_number VARCHAR(100) NOT NULL,
+    invoice_date DATE NOT NULL,
+    invoice_seq INTEGER NOT NULL CHECK (invoice_seq > 0),
+    business_name VARCHAR(255) NOT NULL,
+    gstin VARCHAR(15) NOT NULL,
     created_at BIGINT,
     calendar_date DATE,
     work_day_id VARCHAR(50) REFERENCES work_days(work_day_id),
-    salesman_id VARCHAR(50) REFERENCES salesmen(id),
+    salesman_id VARCHAR(50) NOT NULL REFERENCES salesmen(id),
     vehicle_id VARCHAR(50) REFERENCES vehicles(id),
     outlet_id VARCHAR(50),
     customer_id VARCHAR(50) REFERENCES customers(id),
@@ -119,7 +123,8 @@ CREATE TABLE invoices (
     payment_ref VARCHAR(255),
     previous_balance_paise BIGINT,
     new_balance_paise BIGINT,
-    status invoice_status DEFAULT 'VALID'
+    status invoice_status DEFAULT 'VALID',
+    CONSTRAINT invoices_salesman_date_seq_key UNIQUE(salesman_id,invoice_date,invoice_seq)
 );
 
 CREATE TABLE sale_items (
@@ -201,3 +206,16 @@ CREATE TABLE inventory_imports (
 
 CREATE UNIQUE INDEX inventory_imports_normalized_ref_key
 ON inventory_imports (lower(regexp_replace(btrim(import_ref), '\s+', '', 'g')));
+
+-- Receipt identity settings and per-salesman calendar-day sequence allocation.
+CREATE TABLE app_settings (
+    id VARCHAR(50) PRIMARY KEY,
+    data JSONB NOT NULL DEFAULT '{}'::jsonb
+);
+INSERT INTO app_settings(id,data) VALUES ('bill','{"businessName":"","gstin":""}'::jsonb);
+CREATE TABLE invoice_counters (
+    salesman_id VARCHAR(50) NOT NULL REFERENCES salesmen(id),
+    invoice_date DATE NOT NULL,
+    last_seq INTEGER NOT NULL CHECK(last_seq > 0),
+    PRIMARY KEY(salesman_id,invoice_date)
+);

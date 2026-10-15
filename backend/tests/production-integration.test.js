@@ -23,7 +23,7 @@ test('production contracts: auth, real stock, concurrency, retries, receipts and
   await db.query('ALTER TABLE salesmen ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255), ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT TRUE');
   await db.query(fs.readFileSync(new URL('../migrations/001_inventory_import.sql',import.meta.url),'utf8'));
   await db.query(fs.readFileSync(new URL('../migrations/002_production_integrity.sql',import.meta.url),'utf8'));
-  for(const file of ['003_tax_settings.sql','004_stock_requests.sql','005_performance_indexes.sql','006_bill_round_off.sql','007_log_pagination_index.sql']) await db.query(fs.readFileSync(new URL('../migrations/'+file,import.meta.url),'utf8'));
+  for(const file of ['003_tax_settings.sql','004_stock_requests.sql','005_performance_indexes.sql','006_bill_round_off.sql','007_log_pagination_index.sql','008_bill_settings.sql','009_inclusive_billing.sql']) await db.query(fs.readFileSync(new URL('../migrations/'+file,import.meta.url),'utf8'));
   const password=crypto.randomBytes(20).toString('hex');process.env.ADMIN_PASSWORD_HASH=hashPassword(password);
   const app=express();app.use(express.json());installSecurity(app,db);installOperations(app,db);
   server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));

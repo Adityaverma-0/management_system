@@ -77,6 +77,12 @@ export default function HistoryView() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [workDays, setWorkDays] = useState<WorkDay[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [revision, setRevision] = useState(0);
+  useEffect(() => {
+    const update = () => setRevision(value => value + 1);
+    window.addEventListener('day-updated', update);
+    return () => window.removeEventListener('day-updated', update);
+  }, []);
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
 
@@ -95,7 +101,7 @@ export default function HistoryView() {
       setLoading(false);
       console.log(`Loaded ${invs.length} invoices in ${performance.now() - start}ms`);
     });
-  }, [filters.dateRange]);
+  }, [filters.dateRange, revision]);
 
   // Apply in-memory filters
   const filteredInvoices = useMemo(() => {

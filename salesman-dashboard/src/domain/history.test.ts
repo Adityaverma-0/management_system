@@ -14,7 +14,6 @@ describe('History Performance Targets', () => {
         calendarDate: '2026-10-04',
         workDayId: 'wd-1',
         salesmanId: 'sm-1',
-        vehicleId: 'v-1',
         outletId: 'out-1',
         customerId: i % 10 === 0 ? 'cust-1' : 'cust-2',
         items: [{ productId: 'p-1', quantityPieces: 1, lineTotalPaise: 1000 }],

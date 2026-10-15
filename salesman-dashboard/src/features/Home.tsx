@@ -52,7 +52,8 @@ export default function Home() {
     refresh();
     const timer = window.setInterval(refresh, 20000);
     window.addEventListener('focus', refresh);
-    return () => { window.clearInterval(timer); window.removeEventListener('focus', refresh); };
+    window.addEventListener('day-updated', refresh);
+    return () => { window.clearInterval(timer); window.removeEventListener('focus', refresh); window.removeEventListener('day-updated', refresh); };
   }, []);
 
   if (error) return <div role="alert" className="p-4">{error}<button onClick={() => window.location.reload()}>Retry</button></div>;

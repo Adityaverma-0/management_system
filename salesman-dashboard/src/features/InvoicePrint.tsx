@@ -78,9 +78,10 @@ export default function InvoicePrint() {
       {/* The Printable Invoice Area - designed for 80mm thermal printers (approx 300px wide) */}
       <div className="bg-white text-black max-w-[320px] mx-auto p-4 font-mono text-sm shadow-md print:shadow-none print:p-0 print:m-0 print:max-w-none">
         <div className="text-center border-b border-black pb-2 mb-2">
-          <h2 className="font-bold text-xl uppercase">FMCG Van Sales</h2>
+          <h2 className="font-bold text-xl uppercase break-words">{invoice.businessName || 'FMCG Van Sales'}</h2>
+          <p className="text-xs">GSTIN: {invoice.gstin || 'Not configured'}</p>
           <p className="text-xs">Invoice / Cash Receipt</p>
-          <p className="text-xs mt-1">Date: {new Date(invoice.createdAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
+          <p className="text-xs mt-1">Date: {new Date(invoice.createdAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }).replace(/\b(am|pm)\b/g, value => value.toUpperCase())}</p>
         </div>
         
         <div className="mb-2">
@@ -90,7 +91,6 @@ export default function InvoicePrint() {
           )}
           <p><strong>Salesman:</strong> {invoice.salesmanName || invoice.salesmanId}</p>
           {invoice.salesmanPhone && <p><strong>Phone:</strong> {invoice.salesmanPhone}</p>}
-          <p><strong>Vehicle:</strong> {invoice.vehicleId}</p>
           
           <p className="mt-1"><strong>Customer:</strong> {invoice.customerName || 'Walk-in'}</p>
         </div>
@@ -119,26 +119,14 @@ export default function InvoicePrint() {
           </table>
         </div>
 
-                {invoice.subtotalPaise ? (
-          <>
-            <div className="text-right text-sm py-2 border-b border-black">
-              <div className="flex justify-between"><span>Subtotal:</span> <span>{formatRupees(invoice.subtotalPaise)}</span></div>
-              <div className="flex justify-between"><span>CGST ({invoice.cgstPercent ?? 0}%):</span> <span>{formatRupees(invoice.cgstAmountPaise || 0)}</span></div>
-              <div className="flex justify-between"><span>Round off:</span><span>{formatRupees(invoice.roundOffPaise || 0)}</span></div>
-              <div className="flex justify-between"><span>SGST ({invoice.sgstPercent ?? 0}%):</span> <span>{formatRupees(invoice.sgstAmountPaise || 0)}</span></div>
-            </div>
-            <div className="text-right text-base font-bold py-2 border-b border-black flex justify-between">
-              <span>Grand Total:</span>
-              <span>{formatPayable(invoice.totalAmountPaise)}</span>
-            </div>
-          </>
-        ) : (
-          <div className="text-right text-base font-bold py-2 border-b border-black flex justify-between">
-             <span>Total:</span>
-             <span>{formatPayable(invoice.totalAmountPaise)}</span>
+        <div className="py-2 border-b border-black">
+          <div className="text-right text-base font-bold flex justify-between">
+            <span>Grand Total:</span>
+            <span>{formatPayable(invoice.totalAmountPaise)}</span>
           </div>
-        )}
-        
+          <p className="text-center text-xs mt-1">GST included in Final Amount</p>
+        </div>
+
         <div className="text-[11px] mt-2 pb-2 border-b border-black border-dashed">
           <div className="flex justify-between font-bold">
             <span>PAYMENT MODE:</span>

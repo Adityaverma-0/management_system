@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
+import { installDayEvents } from './day-events.js';
 import { logPage } from './log-pagination.js';
-import { calculateBill } from './billing.js';
+import { calculateBill, FALLBACK_BUSINESS_NAME, GSTIN_PATTERN, invoiceDate, nextInvoiceSequence } from './billing.js';
 import { AsyncLocalStorage } from 'node:async_hooks';
 const auditContext = new AsyncLocalStorage();
 import { hashPassword, safeUser } from './security.js';
@@ -81,7 +82,7 @@ function dayDto(d, invoices) {
   const total = mode => valid.filter(i=>!mode || i.paymentMode===mode).reduce((s,i)=>s+i.totalAmountPaise,0);
   return {...d.metadata,salesmanName:d.salesman_name,vehicleName:d.vehicle_name,warehouseName:d.godown_name, workDayId:d.work_day_id,calendarDate:dateString(d.calendar_date),state:d.state,salesmanId:d.salesman_id,vehicleId:d.vehicle_id,warehouseId:d.godown_id,routeId:d.route_id || '',openedAt:number(d.opened_at),routeStartedAt:number(d.route_started_at),closedAt:number(d.closed_at),cashCollectedPaise:number(d.cash_collected_paise),adminNote:d.admin_note,invoiceCounter:d.invoice_counter,totalSalesPaise:total(),cashSalesPaise:total('CASH'),upiSalesPaise:total('UPI'),creditSalesPaise:total('CREDIT'),numberOfBills:valid.length,itemsSold:valid.reduce((s,i)=>s+i.items.reduce((t,x)=>t+x.quantityPieces,0),0)};
 }
-function invoiceDto(i, items, user) { return {id:i.id,invoiceNumber:i.invoice_number,createdAt:number(i.created_at),calendarDate:dateString(i.calendar_date),workDayId:i.work_day_id,salesmanId:i.salesman_id,salesmanName:i.salesman_name || user.name || i.salesman_id,salesmanPhone:i.salesman_phone || user.phone || '',vehicleId:i.vehicle_id,outletId:i.outlet_id || '',customerId:i.customer_id,customerName:i.customer_name,totalAmountPaise:number(i.total_amount_paise),paymentMode:i.payment_mode,paymentRef:i.payment_ref,previousBalancePaise:number(i.previous_balance_paise),newBalancePaise:number(i.new_balance_paise),status:i.status,cgstPercent:number(i.cgst_percent),sgstPercent:number(i.sgst_percent),cgstAmountPaise:number(i.cgst_amount_paise),sgstAmountPaise:number(i.sgst_amount_paise),subtotalPaise:number(i.subtotal_paise),roundOffPaise:number(i.round_off_paise),items:items.map(x=>({productId:x.product_id,quantityPieces:x.quantity_pieces,lineTotalPaise:number(x.line_total_paise),productSnapshot:x.product_snapshot}))}; }
+function invoiceDto(i, items, user) { return {id:i.id,invoiceNumber:i.invoice_number,createdAt:number(i.created_at),calendarDate:dateString(i.calendar_date),workDayId:i.work_day_id,salesmanId:i.salesman_id,salesmanName:i.salesman_name || user.name || i.salesman_id,salesmanPhone:i.salesman_phone || user.phone || '',outletId:i.outlet_id || '',customerId:i.customer_id,customerName:i.customer_name,totalAmountPaise:number(i.total_amount_paise),paymentMode:i.payment_mode,paymentRef:i.payment_ref,previousBalancePaise:number(i.previous_balance_paise),newBalancePaise:number(i.new_balance_paise),status:i.status,businessName:i.business_name,gstin:i.gstin,invoiceDate:dateString(i.invoice_date),invoiceSeq:number(i.invoice_seq),items:items.map(x=>({productId:x.product_id,quantityPieces:x.quantity_pieces,lineTotalPaise:number(x.line_total_paise),productSnapshot:x.product_snapshot}))}; }
 async function snapshot(c, user) {
   const products = (await c.query('SELECT * FROM products ORDER BY name')).rows.map(productDto);
   const days = (await c.query('SELECT w.*,s.name AS salesman_name,v.name AS vehicle_name,g.name AS godown_name FROM work_days w JOIN salesmen s ON s.id=w.salesman_id JOIN vehicles v ON v.id=w.vehicle_id JOIN godowns g ON g.id=w.godown_id WHERE w.salesman_id=$1 ORDER BY w.opened_at DESC',[user.id])).rows;
@@ -102,13 +103,24 @@ async function snapshot(c, user) {
   const loads = (await c.query("SELECT response FROM api_operations WHERE actor_id=$1 AND operation='load' ORDER BY created_at",[user.id])).rows.map(x=>x.response);
   const accounting = (await c.query('SELECT * FROM accounting_ledger WHERE work_day_id=ANY($1::varchar[])',[ids])).rows.map(a=>({id:a.id,timestamp:number(a.timestamp),type:a.type,amountPaise:number(a.amount_paise),customerId:a.customer_id,invoiceId:a.invoice_id,workDayId:a.work_day_id}));
   const customers = (await c.query('SELECT * FROM customers ORDER BY name')).rows.map(customerDto);
-  const taxRes = await c.query("SELECT data FROM app_settings WHERE id='tax'");
-  const taxData = taxRes.rows[0]?.data || {cgst:0, sgst:0};
-  const tax = { cgst: Number(taxData.cgst) || 0, sgst: Number(taxData.sgst) || 0 };
-  return { products, workDays:days.map(d=>dayDto(d,invoices)),invoices,ledger:ledgerRows,loads,accounting,customers,outlets:customers.map(c=>({id:c.id,name:c.shopName || c.name,status:invoices.some(i=>i.customerId===c.id && i.workDayId===days[0]?.work_day_id && i.status==='VALID')?'Visited':'Pending'})), tax };
+  return { products, workDays:days.map(d=>dayDto(d,invoices)),invoices,ledger:ledgerRows,loads,accounting,customers,outlets:customers.map(c=>({id:c.id,name:c.shopName || c.name,status:invoices.some(i=>i.customerId===c.id && i.workDayId===days[0]?.work_day_id && i.status==='VALID')?'Visited':'Pending'})) };
 }
 
 export function installOperations(app,pool) {
+  installDayEvents(app);
+  app.get('/api/v2/settings/business',endpoint(async () => {
+    const data=(await pool.query("SELECT data FROM app_settings WHERE id='bill'")).rows[0]?.data || {};
+    return {businessName:data.businessName || '',gstin:data.gstin || '',fallbackBusinessName:FALLBACK_BUSINESS_NAME};
+  }));
+  app.put('/api/v2/admin/settings/business',endpoint(req=>transaction(pool,async c=>{
+    const businessName=text(req.body?.businessName,'Business name',false,255);
+    const gstin=text(req.body?.gstin,'GST number',false,15).toUpperCase();
+    if(gstin && !GSTIN_PATTERN.test(gstin))throw new ApiError('Enter a valid 15-character GSTIN (for example 27ABCDE1234F1Z5).');
+    const data={businessName,gstin};
+    await c.query("INSERT INTO app_settings(id,data) VALUES('bill',$1) ON CONFLICT(id) DO UPDATE SET data=EXCLUDED.data",[data]);
+    await audit(c,'UPDATE_BUSINESS_SETTINGS','bill',data);
+    return {...data,fallbackBusinessName:FALLBACK_BUSINESS_NAME};
+  })));
   const masterFields = {
     godowns:['name','location_name','active'], vehicles:['name','plate','godown_id','active'],
     products:['name','price_paise','units_per_strip','strips_per_box','pieces_per_box','active','sku','barcode','hsn','uom'],
@@ -489,30 +501,29 @@ export function installOperations(app,pool) {
     const balances = new Map((await c.query(`SELECT product_id, ${sumSQL} AS qty FROM stock_ledger WHERE location_id=$1 AND product_id=ANY($2::varchar[]) GROUP BY product_id`, [d.vehicle_id, items.map(i=>i.productId)])).rows.map(r=>[r.product_id,number(r.qty)]));
     let total=0;for(const i of items){const qty=balances.get(i.productId)||0;if(qty<i.quantityPieces)throw new ApiError(`Insufficient inventory. Available quantity: ${qty}.`,409);i.lineTotalPaise=integer(i.quantityPieces*number(i.product.price_paise),'Line amount',0,Number.MAX_SAFE_INTEGER);total+=i.lineTotalPaise;}
     integer(total,'Total',1,Number.MAX_SAFE_INTEGER);
-    const taxRes = await c.query("SELECT data FROM app_settings WHERE id='tax'");
-    const taxData = taxRes.rows[0]?.data || {cgst:0, sgst:0};
-    const cgst_percent = Number(taxData.cgst) || 0;
-    const sgst_percent = Number(taxData.sgst) || 0;
-    const bill = calculateBill(total, taxData.cgst, taxData.sgst);
-    const cgst_amount_paise = bill.cgstAmountPaise;
-    const sgst_amount_paise = bill.sgstAmountPaise;
+    const bill = calculateBill(total);
     const grand_total = bill.totalAmountPaise;
+    if (grand_total !== b.totalAmountPaise) throw new ApiError('Product prices changed. Refresh and review the sale.',409);
+    const settings = (await c.query("SELECT data FROM app_settings WHERE id='bill' FOR SHARE")).rows[0]?.data || {};
+    const businessName = settings.businessName?.trim() || FALLBACK_BUSINESS_NAME;
+    const gstin = settings.gstin || '';
 
-    if ((grand_total!==b.totalAmountPaise && bill.unroundedTotalPaise!==b.totalAmountPaise) || ['subtotalPaise','cgstAmountPaise','sgstAmountPaise'].some(key=>b[key]!==undefined && b[key]!==bill[key])) throw new ApiError('Product prices or tax rates changed. Refresh and review the sale.',409);
     if(b.paymentMode==='UPI')text(b.paymentRef,'UPI reference');
     let customer=null;if(b.customerId && b.customerId!=='walk-in'){customer=(await c.query('SELECT * FROM customers WHERE id=$1 FOR UPDATE',[b.customerId])).rows[0];if(!customer)throw new ApiError('Customer not found.');}
     if(b.paymentMode==='CREDIT' && !customer)throw new ApiError('A customer is required for credit sales.');
     const before=number(customer?.outstanding_balance_paise),after=before+(b.paymentMode==='CREDIT'?grand_total:0);
     if(b.paymentMode==='CREDIT' && customer.credit_limit_paise!==null && after>number(customer.credit_limit_paise))throw new ApiError('Customer credit limit exceeded.',409);
-    const id=uid(),timestamp=Date.now(),counter=d.invoice_counter+1,invoiceNumber=`${d.vehicle_id}-${dateString(d.calendar_date).replaceAll('-','')}-${id.slice(0,8)}`;
-    
-    await c.query('INSERT INTO invoices(id,invoice_number,created_at,calendar_date,work_day_id,salesman_id,vehicle_id,outlet_id,customer_id,customer_name,total_amount_paise,payment_mode,payment_ref,previous_balance_paise,new_balance_paise,cgst_percent,sgst_percent,cgst_amount_paise,sgst_amount_paise,subtotal_paise,round_off_paise) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)',[id,invoiceNumber,timestamp,d.calendar_date,d.work_day_id,d.salesman_id,d.vehicle_id,customer?.id||null,customer?.id||null,customer?.name||'Walk-in',grand_total,b.paymentMode,b.paymentRef||null,before,after,cgst_percent,sgst_percent,cgst_amount_paise,sgst_amount_paise,total,bill.roundOffPaise]);
+    const id=uid(),timestamp=Date.now(),counter=d.invoice_counter+1;
+    const date=invoiceDate(timestamp);
+    const sequence=await nextInvoiceSequence(c,d.salesman_id,date);
+    const invoiceNumber=String(sequence);
+    await c.query('INSERT INTO invoices(id,invoice_number,created_at,calendar_date,work_day_id,salesman_id,vehicle_id,outlet_id,customer_id,customer_name,total_amount_paise,payment_mode,payment_ref,previous_balance_paise,new_balance_paise,business_name,gstin,invoice_date,invoice_seq) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)',[id,invoiceNumber,timestamp,date,d.work_day_id,d.salesman_id,d.vehicle_id,customer?.id||null,customer?.id||null,customer?.name||'Walk-in',grand_total,b.paymentMode,b.paymentRef||null,before,after,businessName,gstin,date,sequence]);
     await c.query(`INSERT INTO sale_items(invoice_id,product_id,quantity_pieces,line_total_paise,product_snapshot) SELECT $1,x.product_id,x.quantity_pieces,x.line_total_paise,x.product_snapshot FROM jsonb_to_recordset($2::jsonb) AS x(product_id varchar,quantity_pieces integer,line_total_paise bigint,product_snapshot jsonb)`, [id,JSON.stringify(items.map(i=>({product_id:i.productId,quantity_pieces:i.quantityPieces,line_total_paise:i.lineTotalPaise,product_snapshot:productDto(i.product)})))]);
     await c.query(`INSERT INTO stock_ledger(id,timestamp,type,product_id,quantity_pieces,location_id,reference_id,work_day_id) SELECT x.id,$1,'SALE',x.product_id,x.quantity_pieces,$2,$3,$4 FROM jsonb_to_recordset($5::jsonb) AS x(id varchar,product_id varchar,quantity_pieces integer)`, [timestamp,d.vehicle_id,id,d.work_day_id,JSON.stringify(items.map(i=>({id:uid(),product_id:i.productId,quantity_pieces:i.quantityPieces})))]);
     await c.query('INSERT INTO accounting_ledger(id,timestamp,type,amount_paise,customer_id,invoice_id,work_day_id) VALUES($1,$2,$3,$4,$5,$6,$7)',[uid(),timestamp,'SALES_'+b.paymentMode,grand_total,customer?.id||null,id,d.work_day_id]);
     if(b.paymentMode==='CREDIT')await c.query("INSERT INTO accounting_ledger(id,timestamp,type,amount_paise,customer_id,invoice_id,work_day_id) VALUES($1,$2,'CUSTOMER_RECEIVABLE',$3,$4,$5,$6)",[uid(),timestamp,grand_total,customer.id,id,d.work_day_id]);
     if(customer)await c.query('UPDATE customers SET outstanding_balance_paise=$2,last_sold_timestamp=$3 WHERE id=$1',[customer.id,after,timestamp]);
-    await c.query('UPDATE work_days SET invoice_counter=$2 WHERE work_day_id=$1',[d.work_day_id,counter]);await audit(c,'SALE',id,{workDayId:d.work_day_id,total});return {id,invoiceNumber,...bill};
+    await c.query('UPDATE work_days SET invoice_counter=$2 WHERE work_day_id=$1',[d.work_day_id,counter]);await audit(c,'SALE',id,{workDayId:d.work_day_id,total});return {id,invoiceNumber,invoiceDate:date,invoiceSeq:sequence,businessName,gstin,...bill};
   })));
   app.post('/api/v2/salesman/invoices/:id/cancel',endpoint(req=>operation(pool,req,'cancel:'+req.params.id,async c=>{
     const invoice=(await c.query('SELECT * FROM invoices WHERE id=$1 AND salesman_id=$2',[req.params.id,req.user.id])).rows[0];if(!invoice)throw new ApiError('Invoice not found.',404);
@@ -531,7 +542,7 @@ export function installOperations(app,pool) {
     const held=b.heldItems||{},unloaded=b.unloadedItems||{};
     if(Object.keys({...held,...unloaded}).some(id=>!products.some(p=>p.id===id)))throw new ApiError('Unknown product in unload.');
     const cash=integer(b.cashCollected,'Cash collected',0,Number.MAX_SAFE_INTEGER),breakdown=b.cashBreakdown||{};
-    let counted=0;for(const [denom,count] of Object.entries(breakdown)){if(!['NOTE_500','NOTE_200','NOTE_100','NOTE_50','NOTE_20','NOTE_10','COIN_10','COIN_5','COIN_2','COIN_1'].includes(denom))throw new ApiError('Invalid cash denomination.');counted+=Number(denom.split('_')[1])*100*integer(count,'Denomination count',0,9999);}
+    let counted=0;for(const [denom,count] of Object.entries(breakdown)){if(denom==='PAISE'){counted+=integer(count,'Additional cash (paise)',0,99);continue;}if(!['NOTE_500','NOTE_200','NOTE_100','NOTE_50','NOTE_20','NOTE_10','COIN_10','COIN_5','COIN_2','COIN_1'].includes(denom))throw new ApiError('Invalid cash denomination.');counted+=Number(denom.split('_')[1])*100*integer(count,'Denomination count',0,9999);}
     if(counted!==cash)throw new ApiError('Cash denomination total does not match cash collected.');
     const paymentTotals={cash:0,upi:0,credit:0,total:0};const billCounts={Cash:0,UPI:0,Credit:0};
     const bills=(await c.query("SELECT * FROM invoices WHERE work_day_id=$1 AND status='VALID'",[d.work_day_id])).rows;

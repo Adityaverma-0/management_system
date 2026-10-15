@@ -4,36 +4,12 @@ import { setCatalog } from './catalog';
 import { Customer, DayState, Invoice, WorkDay } from '../domain/types';
 
 
-let currentTax: { cgst: number; sgst: number } = (() => {
-  try {
-    const saved = localStorage.getItem("app_tax_settings");
-    return saved ? JSON.parse(saved) : { cgst: 0, sgst: 0 };
-  } catch {
-    return { cgst: 0, sgst: 0 };
-  }
-})();
-
-export function getTaxSettings(): { cgst: number; sgst: number } {
-  return currentTax;
-}
-
-export async function fetchTaxSettings(): Promise<{ cgst: number; sgst: number }> {
-  try {
-    const res = await request("/settings/tax");
-    if (res && (typeof res.cgst === "number" || typeof res.sgst === "number")) {
-      currentTax = { cgst: Number(res.cgst) || 0, sgst: Number(res.sgst) || 0 };
-      try { localStorage.setItem("app_tax_settings", JSON.stringify(currentTax)); } catch {}
-    }
-  } catch {}
-  return currentTax;
-}
-
 let refreshing: Promise<void> | null = null;
 let refreshedAt = 0;
 let refreshedAccount = ''; 
 export function refreshData(force = false): Promise<void> {
   if (!force && refreshedAccount === session()?.user?.id && Date.now() - refreshedAt < 1000) return Promise.resolve();
-  if (refreshing) return refreshing;
+  if (refreshing) return force ? refreshing.then(() => refreshData(true)) : refreshing;
   const account = session()?.user?.id;
   refreshing = (async () => {
     const data = await request('/salesman/snapshot');
@@ -47,10 +23,6 @@ export function refreshData(force = false): Promise<void> {
       await Promise.all(data[name].map((row: any) => store.put(row)));
     }
     await tx.done; setCatalog(data.products);
-    if (data.tax) {
-      currentTax = { cgst: Number(data.tax.cgst) || 0, sgst: Number(data.tax.sgst) || 0 };
-      try { localStorage.setItem("app_tax_settings", JSON.stringify(currentTax)); } catch {}
-    }
     refreshedAt = Date.now(); refreshedAccount = account;
   })().finally(() => { refreshing = null; });
   return refreshing;
@@ -68,6 +40,7 @@ export function fetchActiveWorkDay(): Promise<WorkDay> {
     await refreshData();
     let days = await (await getDB()).getAll('workDays');
     let active = days.find(d => d.state !== 'CLOSED');
+    if (!active && days.length) return days.sort((a,b) => b.openedAt-a.openedAt)[0];
     if (!active) {
       await mutate('/salesman/work-days', {});
       days = await (await getDB()).getAll('workDays'); active = days.find(d => d.state !== 'CLOSED');
@@ -77,12 +50,15 @@ export function fetchActiveWorkDay(): Promise<WorkDay> {
   })().finally(() => { starting = null; });
   return starting;
 }
-export const startNewWorkDay = fetchActiveWorkDay;
-export const devResetDay = fetchActiveWorkDay;
+export async function startNewWorkDay() {
+  await mutate('/salesman/work-days', {});
+  return fetchActiveWorkDay();
+}
+export const devResetDay = startNewWorkDay;
 export const seedInitialData = refreshData; // Compatibility only: production never seeds records.
 export const updateDayState = (id: string, state: DayState) => mutate(`/salesman/work-days/${id}/state`, {state});
 export const submitLoadStock = (workDayId: string, _warehouseId: string, _vehicleId: string, items: {productId:string;quantityPieces:number}[]) => mutate('/salesman/stock-requests',{workDayId,items});
-export async function saveSaleGenerateInvoice(workDayId: string, sale: Omit<Invoice,'id'|'invoiceNumber'|'status'|'createdAt'|'calendarDate'|'previousBalancePaise'|'newBalancePaise'|'workDayId'|'customerName'>): Promise<string> {
+export async function saveSaleGenerateInvoice(workDayId: string, sale: Omit<Invoice,'id'|'invoiceNumber'|'status'|'createdAt'|'calendarDate'|'previousBalancePaise'|'newBalancePaise'|'workDayId'|'customerName'|'businessName'|'gstin'|'invoiceDate'|'invoiceSeq'>): Promise<string> {
   if (refreshing) await refreshing;
   const body = {...sale,workDayId};
   const result = await request('/salesman/sales',body,true);

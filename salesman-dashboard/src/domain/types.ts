@@ -45,14 +45,17 @@ export type PaymentMode = 'CASH' | 'UPI' | 'CREDIT';
 
 export interface Invoice {
   id: string; // The idempotency key
-  invoiceNumber: string; // VEH-YYYYMMDD-0001
+  invoiceNumber: string; // Backend daily sequence (legacy printed numbers are retained)
+  businessName?: string;
+  gstin?: string;
+  invoiceDate?: string;
+  invoiceSeq?: number;
   createdAt: number; // previously timestamp
   calendarDate: string; // YYYY-MM-DD local time, source of truth
   workDayId: string; 
   salesmanId: string;
   salesmanName?: string;
   salesmanPhone?: string;
-  vehicleId: string;
   outletId: string; 
   customerId?: string; 
   customerName?: string; // snapshot of name at sale
@@ -63,13 +66,7 @@ export interface Invoice {
   previousBalancePaise?: number; 
   newBalancePaise?: number; 
   status: 'VALID' | 'VOID';
-  subtotalPaise?: number;
-  roundOffPaise?: number;
   workDayState?: DayState;
-  cgstPercent?: number;
-  sgstPercent?: number;
-  cgstAmountPaise?: number;
-  sgstAmountPaise?: number;
 }
 
 export type LedgerEntryType = 'LOAD_OUT' | 'LOAD_IN' | 'SALE' | 'SALE_CANCEL' | 'UNLOAD_OUT' | 'UNLOAD_IN' | 'HOLD_CARRY_FORWARD';

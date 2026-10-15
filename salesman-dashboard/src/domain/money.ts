@@ -17,7 +17,15 @@ export function rupeesToPaise(rupees: number): number {
   return Math.round(rupees * 100);
 }
 
-// Preserve decimal historical invoices; new payable amounts are whole rupees.
+// Preserve exact paise, while omitting redundant decimals for whole rupees.
 export function formatPayable(paise: number): string {
   return paise % 100 === 0 ? `₹ ${paise / 100}` : formatRupees(paise);
+}
+
+// Round once after summing the item amounts, matching backend billing.
+export function roundPayablePaise(paise: number): number {
+  if (!Number.isSafeInteger(paise) || paise < 0) throw new RangeError('Invalid monetary amount.');
+  const rounded = Number(((BigInt(paise) + 50n) / 100n) * 100n);
+  if (!Number.isSafeInteger(rounded)) throw new RangeError('Invalid monetary amount.');
+  return rounded;
 }

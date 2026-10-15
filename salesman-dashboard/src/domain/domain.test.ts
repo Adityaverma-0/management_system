@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import { piecesToDisplay, displayToPieces } from './units';
 import { canTransition } from './dayState';
 import { calculateVehicleStockSummary, canFulfillStock, getLowStockSuggestions } from './stockLedger';
-import { generateInvoiceNumber } from './invoice';
 import { Product, StockLedgerEntry, Customer, AccountingLedgerEntry } from './types';
 import { validateNewCustomer } from './customers';
 import { validatePaymentMode } from './payments';
@@ -131,12 +130,6 @@ describe('Top-up Suggestions', () => {
 
     const sugg = getLowStockSuggestions(stockSummary, history, products, warehouseFn);
     expect(sugg[0].suggestedTopUp).toBe(40);
-  });
-});
-
-describe('Invoice Numbering', () => {
-  it('generates format correctly', () => {
-    expect(generateInvoiceNumber('hardpiplya-v1', '2024-05-12', 1)).toBe('HARDPIPLYA-V1-20240512-0001');
   });
 });
 

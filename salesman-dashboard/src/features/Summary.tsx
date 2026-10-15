@@ -31,7 +31,8 @@ export default function Summary() {
   useEffect(() => {
     loadData();
     window.addEventListener('focus', loadData);
-    return () => window.removeEventListener('focus', loadData);
+    window.addEventListener('day-updated', loadData);
+    return () => { window.removeEventListener('focus', loadData); window.removeEventListener('day-updated', loadData); };
   }, []);
 
   return (

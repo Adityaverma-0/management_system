@@ -52,3 +52,33 @@ The Dockerfile needs repository-root build context because it copies both `backe
 Run `npm run build` from the repository root to build both apps into one `dist/` directory. Deploy the root Vercel project with its checked-in install command and rewrites; `/salesman/*` uses `dist/salesman/index.html`, while other application paths use `dist/index.html`. Set the same `VITE_API_BASE_URL` for both builds. Legacy separate deployments can remain during rollout; redirect their paths to the unified `/salesman/` prefix when ready (users must sign in again across origins). Run `npm --prefix backend start` under the existing process supervisor. Configure TLS at the existing reverse proxy, backend environment, database access, Python executable and OCR dependencies. No new hosting infrastructure is required. Apply migrations before serving traffic; preserve a database backup and the previous application build for rollback. Review the current handover report for tested scope and remaining dependency advisories.
 
 See [implementation, measured results, and rollout limitations](IMPLEMENTATION-REPORT.md).
+
+## Inclusive receipt billing
+
+Apply `npm --prefix backend run migrate` before serving the updated apps. Migration
+`009_inclusive_billing.sql` removes sales invoice tax/rounding columns, snapshots the
+historical hardcoded business identity, and creates per-salesman daily counters.
+Migration failures now stop startup. Supplier purchase-invoice extraction remains
+independent of sales billing.
+
+Admin **Business Settings** saves the business name and GSTIN. An unset name uses
+`FMCG Van Sales` with an admin warning; an unset GSTIN is explicitly shown as
+`Not configured`. Settings are authenticated at `GET /api/v2/settings/business`;
+only admins can write `PUT /api/v2/admin/settings/business`. Each new invoice saves
+its own identity. Product prices include GST. The sum of line amounts is rounded once to the nearest
+rupee (50 paise rounds up). Payments, credit balances, reports and cancellation
+reversals use this saved rounded payable. The receipt shows only Grand Total,
+without a round-off row. Historical charged amounts remain unchanged; cash
+reconciliation still supports paise for those historical bills.
+
+New invoice numbers are `1`, `2`, … for each salesman and actual Asia/Kolkata sale
+date, including when a work day spans midnight or multiple work days occur on the
+same date. Counter allocation, invoice, stock, accounting and idempotency response
+commit together. Undo preserves a VOID invoice and its number; failed transactions
+consume no number. Existing printed invoice numbers and charged historical totals
+are retained to preserve accounting history. Legacy invoices reserve sequence slots
+for their date. UUID primary keys remain internal references.
+
+Day-end submission and approval re-fetch data immediately. Authenticated update
+streams notify the other app, with ten-second polling as a reconnect/multiple-worker
+fallback. Approved days remain visible until the salesman selects **Start New Day**.

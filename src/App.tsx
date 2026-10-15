@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, NavLink } from 'react-router-dom';
 import { AuthProvider, useAuth } from './features/auth/AuthContext';
-import { CheckCircle, Warehouse, Truck, Package, Users, FileUp, Database , TrendingUp} from 'lucide-react';
+import { CheckCircle, Warehouse, Truck, Package, Users, FileUp, Database , TrendingUp, Settings} from 'lucide-react';
 
 import Login from './features/auth/Login';
 import ApprovalDashboard from './features/admin/ApprovalDashboard';
@@ -14,6 +14,8 @@ import ProductsPage from './features/admin/ProductsPage';
 import SalesmenPage from './features/admin/SalesmenPage';
 import InventoryImport from './features/admin/InventoryImport';
 import ManualStockPage from './features/admin/ManualStockPage';
+import BusinessSettingsWarning from './features/admin/BusinessSettingsWarning';
+import BusinessSettings from './features/admin/BusinessSettings';
 import SalesDashboard from './features/admin/SalesDashboard';
 
 
@@ -58,10 +60,12 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
             <NavLink to="/salesmen" className={navClass}><Users size={18} /> Salesmen</NavLink>
             <NavLink to="/inventory/import" className={navClass}><FileUp size={18} /> Inventory PDF Import</NavLink>
             <NavLink to="/manual-stock" className={navClass}><Database size={18} /> Manual Stock Add</NavLink>
+            <NavLink to="/business-settings" className={navClass}><Settings size={18} /> Business Settings</NavLink>
             <NavLink to="/sales-dashboard" className={navClass}><TrendingUp size={18} /> Sales Dashboard</NavLink>
           </nav>
         </aside>
         <main className="flex-1 min-w-0 p-4 md:p-6 overflow-auto">
+        <BusinessSettingsWarning />
         {children}
       </main>
       </div>
@@ -88,6 +92,7 @@ function App() {
                   <Route path="/salesmen" element={<SalesmenPage />} />
                   <Route path="/inventory/import" element={<InventoryImport />} />
                   <Route path="/manual-stock" element={<ManualStockPage />} />
+                  <Route path="/business-settings" element={<BusinessSettings />} />
                   <Route path="/sales-dashboard" element={<SalesDashboard />} />
                   <Route path="*" element={<div>Page not found.</div>} />
                 </Routes>

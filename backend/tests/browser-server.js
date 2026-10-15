@@ -21,7 +21,7 @@ let server;
 async function cleanup(){await new Promise(r=>server?server.close(r):r());await db.end();await admin.query(`DROP SCHEMA IF EXISTS ${schema} CASCADE`);await admin.end();}
 try {
  await db.query(fs.readFileSync(new URL('../../schema.sql',import.meta.url),'utf8'));
- for(const file of ['001_inventory_import.sql','002_production_integrity.sql'])await db.query(fs.readFileSync(new URL('../migrations/'+file,import.meta.url),'utf8'));
+ for(const file of fs.readdirSync(new URL('../migrations/',import.meta.url)).sort())await db.query(fs.readFileSync(new URL('../migrations/'+file,import.meta.url),'utf8'));
  const password=crypto.randomBytes(20).toString('hex');process.env.ADMIN_PASSWORD_HASH=hashPassword(password);
  await db.query("INSERT INTO godowns(id,name) VALUES('test-godown','Acceptance Godown')");
  await db.query("INSERT INTO vehicles(id,name,godown_id) VALUES('test-vehicle','Acceptance Vehicle','test-godown')");

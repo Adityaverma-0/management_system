@@ -51,19 +51,18 @@ export async function initializeDatabase() {
     `CREATE TABLE IF NOT EXISTS inventory_imports (id VARCHAR(50) PRIMARY KEY, timestamp BIGINT NOT NULL, import_ref VARCHAR(255) UNIQUE NOT NULL, supplier_name VARCHAR(255), godown_id VARCHAR(50))`,
     "migrations/001_inventory_import.sql",
     "migrations/002_production_integrity.sql",
-    "migrations/003_tax_settings.sql",
     "migrations/004_stock_requests.sql",
     "migrations/005_performance_indexes.sql",
-    "migrations/006_bill_round_off.sql",
     "migrations/007_log_pagination_index.sql",
-    "migrations/008_bill_settings.sql"
+    "migrations/008_bill_settings.sql",
+    "migrations/009_inclusive_billing.sql"
   ];
   for (const mig of migrations) {
     try {
       const sql = mig.endsWith(".sql") ? fs.readFileSync(path.join(backendDir, mig), "utf8") : mig;
       await pool.query(sql);
     } catch (e) {
-      console.warn("Migration notice (non-fatal):", mig, e.message);
+      throw new Error(`Migration failed: ${mig}: ${e.message}`, { cause: e });
     }
   }
 }

@@ -32,7 +32,8 @@ export default function CashBreakdownTable({ breakdown, totalPaise, noteCount, c
               <td className="p-2 text-right">{formatRupees(item.count * (item.valueRupees * 100))}</td>
             </tr>
           ))}
-          {items.length === 0 && (
+          {breakdown.PAISE > 0 && <tr><td className="p-2">Additional cash (paise)</td><td className="p-2 text-right">—</td><td className="p-2 text-right">{formatRupees(breakdown.PAISE)}</td></tr>}
+          {items.length === 0 && !breakdown.PAISE && (
             <tr>
               <td colSpan={3} className="p-4 text-center text-gray-500">No cash data</td>
             </tr>

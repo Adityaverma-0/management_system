@@ -2,11 +2,11 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Customer, SaleItem, PaymentMode } from '../../domain/types';
 import { PRODUCTS, productMap } from '../../data/catalog';
-import { getLedger, saveSaleGenerateInvoice, fetchActiveWorkDay, getCustomers, getTaxSettings } from '../../data/mockApi';
+import { getLedger, saveSaleGenerateInvoice, fetchActiveWorkDay, getCustomers } from '../../data/mockApi';
 
 import { calculateRemainingStock } from '../../domain/stockLedger';
 import { displayToPieces, formatQuantity } from '../../domain/units';
-import { formatRupees, formatPayable } from '../../domain/money';
+import { formatRupees, formatPayable, roundPayablePaise } from '../../domain/money';
 import { validatePaymentMode } from '../../domain/payments';
 import { Search, Plus, Minus, ShoppingCart, ArrowLeft, CheckCircle, CreditCard, Banknote, QrCode } from 'lucide-react';
 
@@ -19,7 +19,6 @@ export default function SaleEntry() {
   const [ledger, setLedger] = useState<any[]>([]);
   const [summary, setSummary] = useState<any>(null);
   const [customer, setCustomer] = useState<Customer | undefined>();
-  const tax = useMemo(() => getTaxSettings(), []);
   
   const [cart, setCart] = useState<Record<string, { boxes: number; strips: number; pieces: number }>>({});
   const [errorMsg, setErrorMsg] = useState('');
@@ -88,12 +87,9 @@ export default function SaleEntry() {
     return total;
   }, [cart]);
 
-  const taxBreakdown = useMemo(() => {
-    const cgstAmount = Math.round(subtotalPaise * (tax.cgst || 0) / 100);
-    const sgstAmount = Math.round(subtotalPaise * (tax.sgst || 0) / 100);
-    return { cgstAmount, sgstAmount, total: Math.floor((subtotalPaise + cgstAmount + sgstAmount + 50) / 100) * 100 };
-  }, [subtotalPaise, tax]);
-const updateCart = (productId: string, field: 'boxes'|'strips'|'pieces', delta: number) => {
+  const payablePaise = roundPayablePaise(subtotalPaise);
+
+  const updateCart = (productId: string, field: 'boxes'|'strips'|'pieces', delta: number) => {
     setErrorMsg('');
     if (!summary) return;
 
@@ -114,7 +110,7 @@ const updateCart = (productId: string, field: 'boxes'|'strips'|'pieces', delta: 
   };
 
   const handleGoToPayment = () => {
-    if (taxBreakdown.total === 0) return;
+    if (subtotalPaise === 0) return;
     setStep('PAYMENT');
     setPaymentMode('CASH');
     setErrorMsg('');
@@ -124,7 +120,7 @@ const updateCart = (productId: string, field: 'boxes'|'strips'|'pieces', delta: 
     if (!summary) return;
     setErrorMsg('');
 
-    const err = validatePaymentMode(paymentMode, taxBreakdown.total, customer);
+    const err = validatePaymentMode(paymentMode, payablePaise, customer);
     if (err) {
       setErrorMsg(err);
       return;
@@ -138,25 +134,15 @@ const updateCart = (productId: string, field: 'boxes'|'strips'|'pieces', delta: 
         items.push({ productId, quantityPieces: pieces, lineTotalPaise: pieces * p.pricePaise });
       }
     }
-    const cgstAmount = taxBreakdown.cgstAmount;
-    const sgstAmount = taxBreakdown.sgstAmount;
-    const grandTotal = taxBreakdown.total;
-
     if (saving.current) return;
     saving.current = true; setBusy(true);
     try {
       const invoiceId = await saveSaleGenerateInvoice(summary.workDayId, {
         salesmanId: summary.salesmanId,
-        vehicleId: summary.vehicleId,
         outletId: 'DIRECT-SELL', // fallback for old schema
         customerId: customerId,
         items,
-        totalAmountPaise: grandTotal,
-        subtotalPaise: subtotalPaise,
-        cgstPercent: tax.cgst,
-        sgstPercent: tax.sgst,
-        cgstAmountPaise: cgstAmount,
-        sgstAmountPaise: sgstAmount,
+        totalAmountPaise: payablePaise,
         paymentMode,
         paymentRef: paymentMode === 'UPI' ? paymentRef : undefined
       });
@@ -181,28 +167,8 @@ const updateCart = (productId: string, field: 'boxes'|'strips'|'pieces', delta: 
 
         <div className="p-4 space-y-6">
           <div className="ui-card bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 text-center">
-            {(tax.cgst > 0 || tax.sgst > 0) ? (
-              <div className="mb-3 text-sm text-gray-500 space-y-1 border-b border-gray-100 dark:border-gray-700 pb-3">
-                <div className="flex justify-between">
-                  <span>Taxable Amount:</span>
-                  <span className="font-semibold text-gray-700 dark:text-gray-300">{formatRupees(subtotalPaise)}</span>
-                </div>
-                {tax.cgst > 0 && (
-                  <div className="flex justify-between">
-                    <span>CGST ({tax.cgst}%):</span>
-                    <span className="font-semibold text-gray-700 dark:text-gray-300">{formatRupees(taxBreakdown.cgstAmount)}</span>
-                  </div>
-                )}
-                {tax.sgst > 0 && (
-                  <div className="flex justify-between">
-                    <span>SGST ({tax.sgst}%):</span>
-                    <span className="font-semibold text-gray-700 dark:text-gray-300">{formatRupees(taxBreakdown.sgstAmount)}</span>
-                  </div>
-                )}
-              </div>
-            ) : null}
             <p className="text-gray-500 mb-1">Total Bill Amount</p>
-            <p className="text-4xl font-bold text-blue-600 dark:text-blue-400">{formatPayable(taxBreakdown.total)}</p>
+            <p className="text-4xl font-bold text-blue-600 dark:text-blue-400">{formatPayable(payablePaise)}</p>
             {customer && (
               <p className="text-sm font-bold mt-2 text-gray-600">Customer: {customer.name}</p>
             )}
@@ -223,7 +189,7 @@ const updateCart = (productId: string, field: 'boxes'|'strips'|'pieces', delta: 
               <Banknote size={28} className={paymentMode === 'CASH' ? 'text-green-600' : 'text-gray-400'} />
               <div className="ml-4 text-left flex-1">
                 <p className="font-bold text-lg">CASH</p>
-                <p className="text-sm text-gray-500">Collect {formatPayable(taxBreakdown.total)}</p>
+                <p className="text-sm text-gray-500">Collect {formatPayable(payablePaise)}</p>
               </div>
               {paymentMode === 'CASH' && <CheckCircle size={24} className="text-green-500" />}
             </button>
@@ -259,7 +225,7 @@ const updateCart = (productId: string, field: 'boxes'|'strips'|'pieces', delta: 
                 <p className="font-bold text-lg">CREDIT</p>
                 {customer ? (
                   <p className="text-sm text-gray-500">
-                    New Bal: {formatRupees(customer.outstandingBalancePaise + taxBreakdown.total)}
+                    New Bal: {formatRupees(customer.outstandingBalancePaise + payablePaise)}
                   </p>
                 ) : (
                   <p className="text-sm text-gray-500">Not allowed for walk-in</p>
@@ -349,29 +315,9 @@ const updateCart = (productId: string, field: 'boxes'|'strips'|'pieces', delta: 
 
       {subtotalPaise > 0 && (
         <div className="ui-actions   p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 ">
-          {(tax.cgst > 0 || tax.sgst > 0) && (
-            <div className="mb-2 text-xs text-gray-500 space-y-1">
-              <div className="flex justify-between">
-                <span>Taxable Amount:</span>
-                <span>{formatRupees(subtotalPaise)}</span>
-              </div>
-              {tax.cgst > 0 && (
-                <div className="flex justify-between">
-                  <span>CGST ({tax.cgst}%):</span>
-                  <span>{formatRupees(taxBreakdown.cgstAmount)}</span>
-                </div>
-              )}
-              {tax.sgst > 0 && (
-                <div className="flex justify-between">
-                  <span>SGST ({tax.sgst}%):</span>
-                  <span>{formatRupees(taxBreakdown.sgstAmount)}</span>
-                </div>
-              )}
-            </div>
-          )}
           <div className="flex justify-between items-center mb-4">
             <span className="text-gray-600 dark:text-gray-400 font-bold">Total Payable</span>
-            <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">{formatPayable(taxBreakdown.total)}</span>
+            <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">{formatPayable(payablePaise)}</span>
           </div>
           <button
             onClick={handleGoToPayment}

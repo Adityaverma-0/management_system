@@ -33,7 +33,7 @@ export const DENOMINATIONS: DenominationConfig[] = [
  * Uses a single O(1) calculation for each row in the map.
  */
 export function calculateBreakdownTotal(breakdown: Record<string, number>) {
-  let totalPaise = 0;
+  let totalPaise = breakdown.PAISE || 0;
   let noteCount = 0;
   let coinCount = 0;
 

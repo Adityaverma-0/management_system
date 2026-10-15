@@ -32,7 +32,7 @@ export default function CashCounter({ expectedCashPaise, initialBreakdown, onCha
         nextVal = isNaN(parsed) ? 0 : parsed;
       }
 
-      if (!validateBreakdownCount(nextVal)) {
+      if (!validateBreakdownCount(nextVal) || (key === 'PAISE' && nextVal > 99)) {
         return prev;
       }
 
@@ -130,6 +130,13 @@ export default function CashCounter({ expectedCashPaise, initialBreakdown, onCha
               </div>
             </div>
             
+            {(expectedCashPaise % 100 !== 0 || breakdown.PAISE > 0) && (
+              <label className="block text-sm font-medium">Additional cash (paise)
+                <input type="number" min={0} max={99} step={1} value={breakdown.PAISE || ''}
+                  onChange={e => updateCount('PAISE', e.target.value)} placeholder="0"
+                  className="ml-3 w-20 p-2 border rounded bg-transparent" />
+              </label>
+            )}
             <div className="flex justify-end">
               <button onClick={handleReset} className="text-red-500 text-sm font-bold flex items-center px-3 py-2 bg-red-50 dark:bg-red-900/20 rounded-lg">
                 <RefreshCw size={14} className="mr-1" /> Reset all

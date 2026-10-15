@@ -3,7 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from
 import { Home, Map as MapIcon, Package, FileText, ShoppingCart } from 'lucide-react';
 import clsx from 'clsx';
 import { fetchActiveWorkDay } from './data/mockApi';
-import { request, session } from './data/apiClient';
+import { subscribeDayUpdates } from './data/dayUpdates';
+import { BASE_URL, request, session } from './data/apiClient';
 import { refreshData } from './data/realApi';
 import LoginPage from './features/Login';
 const unified = import.meta.env.BASE_URL === '/salesman/';
@@ -117,9 +118,11 @@ function App() {
   }, []);
   useEffect(() => {
     if (!isAuthenticated) return;
-    const refresh = () => { void refreshData().catch(e => setError(e.message)); };
+    const refresh = () => { void refreshData(true).then(() => window.dispatchEvent(new Event('day-updated'))).catch(() => { /* Keep current screens available during a temporary background sync failure. */ }); };
+    const unsubscribe = subscribeDayUpdates(BASE_URL, session().token, refresh);
+    const timer = window.setInterval(refresh, 10000);
     window.addEventListener('focus', refresh);
-    return () => window.removeEventListener('focus', refresh);
+    return () => { unsubscribe(); window.clearInterval(timer); window.removeEventListener('focus', refresh); };
   }, [isAuthenticated]);
   if (loading) return <div className="p-6">Loading your inventory...</div>;
   if (!isAuthenticated) {

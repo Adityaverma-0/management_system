@@ -6,7 +6,7 @@ import { calculateRemainingStock } from '../domain/stockLedger';
 import { calculateAccountingTotals } from '../domain/accounting';
 import { piecesToDisplay, displayToPieces, formatQuantity } from '../domain/units';
 import { formatRupees } from '../domain/money';
-import { REQUIRE_DENOMINATIONS, compareWithExpectedCash } from '../domain/cashDenominations';
+import { REQUIRE_DENOMINATIONS, compareWithExpectedCash, calculateBreakdownTotal } from '../domain/cashDenominations';
 import { ArrowLeft, CheckCircle, Plus, Minus, Banknote, QrCode, CreditCard, Archive, CornerUpLeft } from 'lucide-react';
 import CashCounter from './CashCounter';
 
@@ -43,9 +43,11 @@ export default function Unload() {
       
       // Load draft or pre-fill from SENT_BACK
       if (s.state === 'SENT_BACK' && s.cashBreakdown && Object.keys(s.cashBreakdown).length > 0) {
-        setCashBreakdown(s.cashBreakdown);
+        const totals = calculateBreakdownTotal(s.cashBreakdown);
+        handleCashChange(s.cashBreakdown, totals.totalPaise, totals.noteCount, totals.coinCount);
       } else if (draft) {
-        setCashBreakdown(draft);
+        const totals = calculateBreakdownTotal(draft);
+        handleCashChange(draft, totals.totalPaise, totals.noteCount, totals.coinCount);
       }
     }).catch(e => setSubmitError(e.message));
     return () => { if (debounceTimer.current) clearTimeout(debounceTimer.current); };
