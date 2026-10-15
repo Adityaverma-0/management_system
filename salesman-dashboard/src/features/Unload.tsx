@@ -20,6 +20,7 @@ export default function Unload() {
   // States
   const [countedStock, setCountedStock] = useState<Record<string, { boxes: number; strips: number; pieces: number }>>({});
   const [heldStock, setHeldStock] = useState<Record<string, { boxes: number; strips: number; pieces: number }>>({});
+  const [manualHoldEdited, setManualHoldEdited] = useState<Record<string, boolean>>({});
   
   const [cashBreakdown, setCashBreakdown] = useState<Record<string, number>>({});
   const [cashTotalPaise, setCashTotalPaise] = useState(0);
@@ -59,11 +60,13 @@ export default function Unload() {
       const initialHold: any = {};
       PRODUCTS.forEach(p => {
         const expectedPieces = calculateRemainingStock(ledger, p.id, summary.vehicleId);
-        initialCount[p.id] = piecesToDisplay(expectedPieces, p);
-        initialHold[p.id] = { boxes: 0, strips: 0, pieces: 0 };
+        const disp = piecesToDisplay(expectedPieces, p);
+        initialCount[p.id] = disp;
+        initialHold[p.id] = { ...disp };
       });
       setCountedStock(initialCount);
       setHeldStock(initialHold);
+      setManualHoldEdited({});
     }
   }, [summary, ledger]);
 
@@ -82,37 +85,61 @@ export default function Unload() {
   };
 
   const updateCount = (productId: string, field: 'boxes'|'strips'|'pieces', delta: number) => {
-    setCountedStock(prev => {
-      const current = prev[productId] || { boxes: 0, strips: 0, pieces: 0 };
+    setCountedStock(prevCount => {
+      const current = prevCount[productId] || { boxes: 0, strips: 0, pieces: 0 };
       const nextVal = Math.max(0, current[field] + delta);
-      return { ...prev, [productId]: { ...current, [field]: nextVal } };
+      const newCount = { ...current, [field]: nextVal };
+
+      const product = PRODUCTS.find(p => p.id === productId)!;
+      const newCountPieces = displayToPieces(newCount, product);
+
+      setHeldStock(prevHold => {
+        const currentHold = prevHold[productId] || { boxes: 0, strips: 0, pieces: 0 };
+        const isEdited = manualHoldEdited[productId];
+
+        if (!isEdited) {
+          return { ...prevHold, [productId]: { ...newCount } };
+        } else {
+          const currentHoldPieces = displayToPieces(currentHold, product);
+          if (currentHoldPieces > newCountPieces) {
+            return { ...prevHold, [productId]: { ...newCount } };
+          }
+          return prevHold;
+        }
+      });
+
+      return { ...prevCount, [productId]: newCount };
     });
   };
 
   const updateHold = (productId: string, field: 'boxes'|'strips'|'pieces', delta: number) => {
-    setHeldStock(prev => {
-      const current = prev[productId] || { boxes: 0, strips: 0, pieces: 0 };
-      const nextVal = Math.max(0, current[field] + delta);
-      
-      const newHold = { ...current, [field]: nextVal };
-      const product = PRODUCTS.find(p => p.id === productId)!;
-      const holdPieces = displayToPieces(newHold, product);
-      const countPieces = displayToPieces(countedStock[productId], product);
-      
-      if (holdPieces > countPieces) return prev; // Cannot hold more than counted
-      
-      return { ...prev, [productId]: newHold };
-    });
+    const product = PRODUCTS.find(p => p.id === productId)!;
+    const current = heldStock[productId] || { boxes: 0, strips: 0, pieces: 0 };
+    const nextVal = Math.max(0, current[field] + delta);
+    const newHold = { ...current, [field]: nextVal };
+    const holdPieces = displayToPieces(newHold, product);
+    const countPieces = displayToPieces(countedStock[productId], product);
+    
+    if (holdPieces > countPieces) return; // Cannot hold more than counted
+    
+    setHeldStock(prev => ({ ...prev, [productId]: newHold }));
+    setManualHoldEdited(prev => ({ ...prev, [productId]: true }));
   };
 
   const holdAll = () => {
     setHeldStock({ ...countedStock });
+    setManualHoldEdited({});
   };
 
   const unloadAll = () => {
     const empty: any = {};
-    PRODUCTS.forEach(p => empty[p.id] = { boxes: 0, strips: 0, pieces: 0 });
+    const edited: any = {};
+    PRODUCTS.forEach(p => {
+      empty[p.id] = { boxes: 0, strips: 0, pieces: 0 };
+      edited[p.id] = true;
+    });
     setHeldStock(empty);
+    setManualHoldEdited(edited);
   };
 
   const { differencePaise, status: cashStatus } = compareWithExpectedCash(cashTotalPaise, accounts.cash);
