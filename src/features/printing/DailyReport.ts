@@ -147,7 +147,7 @@ export function buildDailyReport(data: DailyReportData): HTMLElement {
       ['Product', 'Loaded', 'Sold', 'Remaining'],
       operationalProducts.map(p => [
         productName(p),
-        quantity(number(p.loadedAtStart ?? p.startLoadedPieces ?? 0) + number(p.topUp ?? 0)),
+        quantity((number(p.loadedAtStart ?? p.startLoadedPieces) ?? 0) + (number(p.topUp) ?? 0)),
         quantity(p.soldPieces ?? p.sold),
         quantity(p.countedRemaining ?? p.expectedRemaining)
       ]),
