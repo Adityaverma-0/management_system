@@ -1,3 +1,4 @@
+import { openPrintDialog } from './printing/PrintDialog';
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getInvoice } from '../data/mockApi';
@@ -28,7 +29,7 @@ export default function InvoicePrint() {
   if (!invoice) return <div className="p-4">Loading Invoice...</div>;
 
   const handlePrint = () => {
-    window.print();
+    openPrintDialog({ kind: 'bill', title: `Invoice_${invoice.invoiceNumber}`, element: document.querySelector('[data-print-target="bill"]') });
   };
 
   const handleUndo = async () => {
@@ -76,7 +77,7 @@ export default function InvoicePrint() {
       </div>
 
       {/* The Printable Invoice Area - designed for 80mm thermal printers (approx 300px wide) */}
-      <div className="bg-white text-black max-w-[320px] mx-auto p-4 font-mono text-sm shadow-md print:shadow-none print:p-0 print:m-0 print:max-w-none">
+      <div data-print-target="bill" className="bg-white text-black max-w-[320px] mx-auto p-4 font-mono text-sm shadow-md print:shadow-none print:p-0 print:m-0 print:max-w-none">
         <div className="text-center border-b border-black pb-2 mb-2">
           <h2 className="font-bold text-xl uppercase break-words">{invoice.businessName || 'FMCG Van Sales'}</h2>
           <p className="text-xs">GSTIN: {invoice.gstin || 'Not configured'}</p>

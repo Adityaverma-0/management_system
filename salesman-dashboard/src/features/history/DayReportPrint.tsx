@@ -7,9 +7,9 @@ export default function DayReportPrint({ day, report }: { day: WorkDay, report: 
   const dateDisplay = dDate.toLocaleDateString();
 
   return (
-    <div className="hidden print:block text-black bg-white">
+    <div data-print-target="day-report" className="hidden print:block text-black bg-white">
       {/* A4 Layout */}
-      <div className="hidden sm:print:block p-8">
+      <div data-print-day-page className="hidden sm:print:block p-8">
         <h1 className="text-2xl font-bold mb-4 text-center">Day Summary Report</h1>
         <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
           <div><strong>Salesman:</strong> {day.salesmanId}</div>
@@ -34,7 +34,7 @@ export default function DayReportPrint({ day, report }: { day: WorkDay, report: 
       </div>
 
       {/* 80mm Thermal Receipt Layout */}
-      <div className="sm:print:hidden w-[80mm] text-[11px] leading-tight font-mono mx-auto">
+      <div data-print-day-thermal className="sm:print:hidden w-[80mm] text-[11px] leading-tight font-mono mx-auto">
         <div className="text-center font-bold mb-2 pb-1 border-b border-black">
           <div className="text-sm">DAY REPORT</div>
           <div>{dateDisplay}</div>

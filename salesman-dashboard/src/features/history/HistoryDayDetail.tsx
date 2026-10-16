@@ -1,3 +1,4 @@
+import { openPrintDialog } from '../printing/PrintDialog';
 import { useState, useEffect } from 'react';
 import { WorkDay, Invoice, DayStockReportRow } from '../../domain/types';
 import { formatRupees } from '../../domain/money';
@@ -29,14 +30,7 @@ import { getDayStockReport } from '../../domain/dayStockReport';
       `INVOICES (${dayInvoices.length}):`,
       ...dayInvoices.map(i => `Inv: ${i.invoiceNumber} | Customer: ${i.customerName || "Walk-in"} | Mode: ${i.paymentMode} | Total: ${formatRupees(i.totalAmountPaise)}`)
     ];
-    const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", `Salesman_Report_${day.calendarDate || "day"}.txt`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    openPrintDialog({ kind: 'report', title: 'Salesman Daily Report', lines });
   };
   
   useEffect(() => {
@@ -46,7 +40,7 @@ import { getDayStockReport } from '../../domain/dayStockReport';
   const dayInvoices = invoices.filter(i => i.workDayId === day.workDayId);
 
   return (
-    <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-100 dark:border-gray-700 text-sm overflow-hidden">
+    <div data-print-day-detail className="mt-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-100 dark:border-gray-700 text-sm overflow-hidden">
       
       <div className="flex flex-wrap gap-2 justify-between items-center mb-4">
         <h3 className="font-bold text-lg">Day Details</h3>
@@ -54,7 +48,7 @@ import { getDayStockReport } from '../../domain/dayStockReport';
           <button onClick={handleDownloadReport} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded font-bold text-sm">
             Download Report
           </button>
-          <button onClick={() => window.print()} className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-1 rounded font-bold text-sm">
+          <button onClick={event => openPrintDialog({ kind: 'report', title: 'Salesman Daily Report', element: event.currentTarget.closest('[data-print-day-detail]')?.querySelector('[data-print-target="day-report"]') })} className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-1 rounded font-bold text-sm">
             Print Report
           </button>
         </div>

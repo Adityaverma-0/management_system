@@ -1,3 +1,4 @@
+import { openPrintDialog } from '../printing/PrintDialog';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useApi } from '../auth/useApi';
 import { ArrowLeft, CheckCircle, RotateCcw, XCircle, Package } from 'lucide-react';
@@ -148,18 +149,11 @@ export default function StockApprovalDashboard() {
       `REQUESTED ITEMS (${req.items.length}):`,
       ...req.items.map(i => `- ${i.productName || i.productId}: ${formatItemBreakdown(i)}`)
     ].filter(Boolean);
-    const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", `Stock_Approval_${req.id.slice(0, 8)}.txt`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    openPrintDialog({ kind: 'report', title: 'Stock Approval Report', lines });
   };
 
   const handlePrintReport = () => {
-    window.print();
+    openPrintDialog({ kind: 'report', title: 'Stock Approval Report', element: document.querySelector('[data-print-target="stock-report"]') });
   };
 
 
@@ -171,7 +165,7 @@ export default function StockApprovalDashboard() {
     const isPending = req.status === 'PENDING';
 
     return (
-      <div className="w-full max-w-none space-y-6 p-4 text-sm text-gray-900 dark:text-gray-100">
+      <div data-print-target="stock-report" className="w-full max-w-none space-y-6 p-4 text-sm text-gray-900 dark:text-gray-100">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button aria-label="Go back" onClick={() => setSelectedReq(null)} className="rounded-full p-2 hover:bg-gray-200 dark:hover:bg-gray-800">
@@ -259,7 +253,7 @@ export default function StockApprovalDashboard() {
         </div>
 
         {isPending && (
-          <div className="flex gap-4 pt-4 border-t border-gray-200 dark:border-gray-800">
+          <div data-print-omit className="flex gap-4 pt-4 border-t border-gray-200 dark:border-gray-800">
             <button
               disabled={isBusy}
               onClick={() => void handleApprove(req)}
