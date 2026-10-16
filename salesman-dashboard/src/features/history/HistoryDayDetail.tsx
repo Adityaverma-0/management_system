@@ -1,3 +1,5 @@
+import { buildDailyReport } from '../printing/DailyReport';
+import { request } from '../../data/apiClient';
 import { openPrintDialog } from '../printing/PrintDialog';
 import { useState, useEffect } from 'react';
 import { WorkDay, Invoice, DayStockReportRow } from '../../domain/types';
@@ -11,30 +13,31 @@ import { getDayStockReport } from '../../domain/dayStockReport';
 
   export default function HistoryDayDetail({ day, invoices }: { day: WorkDay, invoices: Invoice[] }) {
   const [report, setReport] = useState<DayStockReportRow[]>([]);
-  const handleDownloadReport = () => {
-    const lines = [
-      "SALESMAN DAILY REPORT",
-      `Salesman: ${day.salesmanId}`,
-      `Vehicle: ${day.vehicleId}`,
-      `Date: ${new Date(day.openedAt).toLocaleDateString()}`,
-      `Status: ${day.state}`,
-      "----------------------------------------",
-      `TOTAL SALES: ${formatRupees(day.totalSalesPaise)}`,
-      `  - Cash: ${formatRupees(day.cashSalesPaise)}`,
-      `  - UPI: ${formatRupees(day.upiSalesPaise)}`,
-      `  - Credit: ${formatRupees(day.creditSalesPaise)}`,
-      "----------------------------------------",
-      "PRODUCT STOCK SUMMARY:",
-      ...report.map(r => `${r.productName}: Sold=${r.sold}, Available=${r.totalAvailable}, Held=${r.holdQty}, Unloaded=${r.unloadQty}`),
-      "----------------------------------------",
-      `INVOICES (${dayInvoices.length}):`,
-      ...dayInvoices.map(i => `Inv: ${i.invoiceNumber} | Customer: ${i.customerName || "Walk-in"} | Mode: ${i.paymentMode} | Total: ${formatRupees(i.totalAmountPaise)}`)
-    ];
-    openPrintDialog({ kind: 'report', title: 'Salesman Daily Report', lines });
+  const [reportBusy, setReportBusy] = useState(false);
+  const [reportError, setReportError] = useState('');
+  const handleDownloadReport = async () => {
+    setReportBusy(true); setReportError('');
+    try {
+      const [products, business] = await Promise.all([getDayStockReport(day.workDayId), request('/settings/business')]);
+      const element = buildDailyReport({
+        businessName: business.businessName, date: day.calendarDate || day.openedAt,
+        salesman: day.salesmanName, vehicle: day.vehicleName, warehouse: day.warehouseName, status: day.state,
+        total: day.totalSalesPaise, cash: day.cashSalesPaise, upi: day.upiSalesPaise,
+        credit: day.creditSalesPaise, collected: day.cashTotalPaise, cashBreakdown: day.cashBreakdown,
+        transactions: day.numberOfBills, itemsSold: day.itemsSold, products, invoices: dayInvoices,
+      });
+      openPrintDialog({ kind: 'report', title: 'Daily Business Report', element });
+    } catch (error) {
+      setReportError(error instanceof Error ? error.message : 'Could not prepare the daily report. Please try again.');
+    } finally { setReportBusy(false); }
   };
-  
+
   useEffect(() => {
-    getDayStockReport(day.workDayId).then(setReport);
+    let active = true;
+    getDayStockReport(day.workDayId).then(rows => { if (active) setReport(rows); }).catch(() => {
+      if (active) setReportError('Could not load daily stock details. Try Download Report again.');
+    });
+    return () => { active = false; };
   }, [day.workDayId]);
 
   const dayInvoices = invoices.filter(i => i.workDayId === day.workDayId);
@@ -45,14 +48,16 @@ import { getDayStockReport } from '../../domain/dayStockReport';
       <div className="flex flex-wrap gap-2 justify-between items-center mb-4">
         <h3 className="font-bold text-lg">Day Details</h3>
         <div className="space-x-2">
-          <button onClick={handleDownloadReport} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded font-bold text-sm">
+          <button disabled={reportBusy} onClick={() => void handleDownloadReport()} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded font-bold text-sm">
             Download Report
           </button>
-          <button onClick={event => openPrintDialog({ kind: 'report', title: 'Salesman Daily Report', element: event.currentTarget.closest('[data-print-day-detail]')?.querySelector('[data-print-target="day-report"]') })} className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-1 rounded font-bold text-sm">
+          <button disabled={reportBusy} onClick={() => void handleDownloadReport()} className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-1 rounded font-bold text-sm">
             Print Report
           </button>
         </div>
       </div>
+      {reportBusy && <p role="status">Preparing daily report…</p>}
+      {reportError && <p role="alert" className="text-red-600">{reportError}</p>}
       <DayReportPrint day={day} report={report} />
       <div className="print:hidden">
 

@@ -1,3 +1,4 @@
+import { buildDailyReport } from '../printing/DailyReport';
 import { openPrintDialog } from '../printing/PrintDialog';
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { useAuth } from '../auth/AuthContext';
@@ -20,6 +21,8 @@ export default function ApprovalDashboard() {
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [reportBusy, setReportBusy] = useState(false);
+  const [reportError, setReportError] = useState('');
   const [busyDayId, setBusyDayId] = useState('');
   const refreshVersion = useRef(0);
   const [selectedReq, setSelectedReq] = useState<any>(null);
@@ -126,34 +129,30 @@ export default function ApprovalDashboard() {
     }
   };
 
-  const handleDownloadReport = (reqObj: any) => {
-    const day = reqObj.requestData || {};
-    const totals = day.paymentTotals || { total: 0, cash: 0, upi: 0, credit: 0 };
-    const lines = [
-      "UNLOAD APPROVAL END-DAY REPORT",
-      `Request ID: ${reqObj.id}`,
-      `Salesman: ${getSalesmanName(day.salesmanId)} (${day.salesmanId})`,
-      `Vehicle: ${getVehicleName(day.vehicleId)} (${day.vehicleId})`,
-      `Date: ${formatCalendarDateIST(day.calendarDate)}`,
-      `Status: ${reqObj.status}`,
-      `Submitted: ${formatDateTimeIST(reqObj.requestedAt)}`,
-      "----------------------------------------",
-      `SALES BREAKDOWN:`,
-      `Cash: ${formatRupees(totals.cash)}`,
-      `UPI: ${formatRupees(totals.upi)}`,
-      `Credit: ${formatRupees(totals.credit)}`,
-      `Total Sales: ${formatRupees(totals.total)}`,
-      `Cash Collected: ${formatRupees(day.cashCollected)}`,
-      "----------------------------------------",
-      `PRODUCTS (${(day.products || []).length}):`,
-      ...(day.products || []).map((p: any) => `- ${p.productName}: Opening=${p.opening}, Loaded=${p.loadedAtStart}, Sold=${p.sold}, Expected=${p.expectedRemaining}, Counted=${p.countedRemaining}, Unload=${p.unloadQty}, Hold=${p.holdQty}`)
-    ].filter(Boolean);
-    openPrintDialog({ kind: 'report', title: 'Unload Approval Report', lines });
+  const handleDownloadReport = async (reqObj: any) => {
+    setReportBusy(true); setReportError('');
+    try {
+      const day = reqObj.requestData;
+      if (!day || !day.paymentTotals) throw new Error('Daily report data is unavailable. Refresh and try again.');
+      const response = await fetchApi(`${API_URL}/settings/business`);
+      if (!response.ok) throw new Error('Could not load report details. Please try again.');
+      const business = await response.json();
+      const counts = day.billCounts;
+      const transactions = counts && [counts.Cash, counts.UPI, counts.Credit].every(Number.isSafeInteger) ? counts.Cash + counts.UPI + counts.Credit : undefined;
+      const element = buildDailyReport({
+        businessName: business.businessName, date: day.calendarDate, submittedAt: reqObj.requestedAt, status: reqObj.status, paymentCounts: counts,
+        salesman: salesmen.find(s => s.id === day.salesmanId)?.name,
+        vehicle: vehicles.find(v => v.id === day.vehicleId)?.name,
+        total: day.paymentTotals.total, cash: day.paymentTotals.cash, upi: day.paymentTotals.upi,
+        credit: day.paymentTotals.credit, collected: day.cashCollected, cashBreakdown: day.cashDenominationBreakdown, transactions, products: day.products,
+      });
+      openPrintDialog({ kind: 'report', title: 'Daily Business Report', element });
+    } catch (error) {
+      setReportError(error instanceof Error ? error.message : 'Could not prepare the daily report. Please try again.');
+    } finally { setReportBusy(false); }
   };
 
-  const handlePrintReport = () => {
-    openPrintDialog({ kind: 'report', title: 'Unload Approval Report', element: document.querySelector('[data-print-target="unload-report"]') });
-  };
+  const handlePrintReport = () => { if (selectedReq) void handleDownloadReport(selectedReq); };
 
   if (loading) return <div className="p-4">Loading approval dashboard...</div>;
 
@@ -176,10 +175,10 @@ export default function ApprovalDashboard() {
             <h2 className="text-xl font-bold">Request Detail</h2>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={() => handleDownloadReport(reqObj)} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-xs font-bold">
+            <button disabled={reportBusy} onClick={() => void handleDownloadReport(reqObj)} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-xs font-bold">
               Download Report
             </button>
-            <button onClick={handlePrintReport} className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-1.5 rounded text-xs font-bold">
+            <button disabled={reportBusy} onClick={handlePrintReport} className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-1.5 rounded text-xs font-bold">
               Print Report
             </button>
           </div>
@@ -187,6 +186,8 @@ export default function ApprovalDashboard() {
 
         {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-red-700">{error}</div>}
 
+        {reportBusy && <p role="status">Preparing daily report…</p>}
+        {reportError && <p role="alert" className="text-red-600">{reportError}</p>}
         {/* 1. Header table */}
         <div className="overflow-x-auto rounded border border-gray-200 dark:border-gray-800">
           <table className="w-full text-left border-collapse bg-white dark:bg-gray-900">

@@ -86,7 +86,8 @@ export async function printDocument(request: PrintRequest, settings: Settings) {
     await new Promise<void>(resolve => win.requestAnimationFrame(() => win.requestAnimationFrame(() => resolve())));
     if (request.kind === 'bill') height = Math.ceil(content.getBoundingClientRect().height * 25.4 / 96) + 2;
     const pageSize = request.kind === 'report' && settings.paper !== 'custom' ? `${settings.paper} ${settings.orientation}` : `${width}mm ${height}mm`;
-    style.textContent = `${css}\n@page { size:${pageSize}; margin:${request.kind === 'bill' ? '0' : '10mm'}; }`;
+    const pageFooter = content.hasAttribute('data-daily-report') ? '@bottom-right { content: "Page " counter(page) " of " counter(pages); font: 8pt Arial, sans-serif; color: #536176; }' : '';
+    style.textContent = `${css}\n@page { size:${pageSize}; margin:${request.kind === 'bill' ? '0' : '10mm'}; ${pageFooter} }`;
     // Keep the frame alive until the native dialog closes (including cancellation).
     win.addEventListener('afterprint', () => frame.remove(), { once: true });
     win.focus();
@@ -112,6 +113,7 @@ function PrintDialog({ request, close }: { request: PrintRequest; close: () => v
       catch (e) { setError(e instanceof Error ? e.message : 'Printing failed. Please try again.'); setBusy(false); }
     }}>
       <h2 className="font-bold text-lg">Print settings</h2>
+      {request.element?.hasAttribute('data-daily-report') && <p role="status" className="text-sm">Report ready. Choose Save as PDF in the print dialog to download.</p>}
       <label className="block">{request.kind === 'bill' ? 'Paper width' : 'Paper size'}
         <select autoFocus className={inputClass} value={settings.paper} onChange={e => setSettings({ ...settings, paper: e.target.value })}>
           {(request.kind === 'bill' ? ['58', '76', '80', 'custom'] : ['A4', 'A5', 'Letter', 'custom']).map(paper => <option key={paper} value={paper}>{paper === 'custom' ? 'Custom' : request.kind === 'bill' ? `${paper} mm` : paper}</option>)}
@@ -125,7 +127,7 @@ function PrintDialog({ request, close }: { request: PrintRequest; close: () => v
       {error && <p role="alert" className="text-red-600">{error}</p>}
       <div className="flex justify-end gap-2">
         <button type="button" disabled={busy} onClick={close} className="rounded bg-gray-200 dark:bg-gray-700 px-3 py-2 font-bold">Cancel</button>
-        <button disabled={busy} className="rounded bg-blue-600 text-white px-3 py-2 font-bold">Print / Save as PDF</button>
+        <button disabled={busy} className="rounded bg-blue-600 text-white px-3 py-2 font-bold">{busy ? 'Preparing…' : 'Print / Save as PDF'}</button>
       </div>
     </form>
   </dialog>;
